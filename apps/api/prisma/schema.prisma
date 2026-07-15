@@ -2,6 +2,61 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model TaskComment {
+  id      String @id @default(uuid())
+  content String
+
+  taskId   String
+  authorId String
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([authorId])
+}
+
+model TaskAttachment {
+  id String @id @default(uuid())
+
+  fileName String
+  fileUrl  String
+  fileSize Int?
+
+  taskId     String
+  uploaderId String
+
+  task     Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader User @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model Label {
+  id    String @id @default(uuid())
+  name  String @unique
+  color String
+
+  tasks TaskLabel[]
+}
+
+model TaskLabel {
+  taskId  String
+  labelId String
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -36,13 +91,20 @@ model User {
   password  String
   status    UserStatus @default(ACTIVE)
 
-  roleId String
-  role           Role             @relation(fields: [roleId], references: [id])
-  ownedProjects  Project[]        @relation("ProjectOwner")
+  roleId         String
+  role           Role            @relation(fields: [roleId], references: [id])
+  ownedProjects  Project[]       @relation("ProjectOwner")
   projectMembers ProjectMember[]
+  createdTasks   Task[]          @relation("TaskCreator")
+  assignedTasks  Task[]          @relation("TaskAssignee")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  taskComments    TaskComment[]
+  taskAttachments TaskAttachment[]
+
+  @@index([roleId])
+  @@index([status])
 }
 
 enum ProjectStatus {
@@ -60,36 +122,112 @@ enum ProjectPriority {
   CRITICAL
 }
 
+enum ProjectMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 model Project {
-  id          String            @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
 
-  status      ProjectStatus     @default(PLANNING)
-  priority    ProjectPriority   @default(MEDIUM)
+  status   ProjectStatus   @default(PLANNING)
+  priority ProjectPriority @default(MEDIUM)
 
-  startDate   DateTime?
-  dueDate     DateTime?
+  startDate DateTime?
+  dueDate   DateTime?
 
-  ownerId     String
-  owner       User              @relation("ProjectOwner", fields: [ownerId], references: [id])
+  ownerId String
+  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
 
-  members     ProjectMember[]
+  members ProjectMember[]
+  tasks   Task[]
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
 }
 
 model ProjectMember {
-  id          String    @id @default(uuid())
+  id String @id @default(uuid())
 
-  projectId   String
-  userId      String
+  projectId String
+  userId    String
 
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  joinedAt    DateTime  @default(now())
+  role             ProjectMemberRole @default(MEMBER)
+  invitationStatus InvitationStatus  @default(ACCEPTED)
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Task {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+
+  status   TaskStatus   @default(TODO)
+  priority TaskPriority @default(MEDIUM)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  creatorId String
+  creator   User   @relation("TaskCreator", fields: [creatorId], references: [id])
+
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+  labels      TaskLabel[]
+
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  estimatedHours Float?
+  actualHours    Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([creatorId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
 }

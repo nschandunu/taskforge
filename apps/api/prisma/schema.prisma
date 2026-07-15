@@ -37,10 +37,9 @@ model User {
   status    UserStatus @default(ACTIVE)
 
   roleId String
-  role   Role   @relation(fields: [roleId], references: [id])
-
-  ownedProjects Project[]       @relation("ProjectOwner")
-  projects      ProjectMember[]
+  role           Role             @relation(fields: [roleId], references: [id])
+  ownedProjects  Project[]        @relation("ProjectOwner")
+  projectMembers ProjectMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,35 +61,35 @@ enum ProjectPriority {
 }
 
 model Project {
-  id          String  @id @default(uuid())
+  id          String            @id @default(uuid())
   name        String
   description String?
 
-  status   ProjectStatus   @default(PLANNING)
-  priority ProjectPriority @default(MEDIUM)
+  status      ProjectStatus     @default(PLANNING)
+  priority    ProjectPriority   @default(MEDIUM)
 
-  startDate DateTime?
-  dueDate   DateTime?
+  startDate   DateTime?
+  dueDate     DateTime?
 
-  ownerId String
-  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
+  ownerId     String
+  owner       User              @relation("ProjectOwner", fields: [ownerId], references: [id])
 
-  members ProjectMember[]
+  members     ProjectMember[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model ProjectMember {
-  id String @id @default(uuid())
+  id          String    @id @default(uuid())
 
-  projectId String
-  userId    String
+  projectId   String
+  userId      String
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  joinedAt DateTime @default(now())
+  joinedAt    DateTime  @default(now())
 
   @@unique([projectId, userId])
 }

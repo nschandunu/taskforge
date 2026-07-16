@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { CreateTaskDto } from '../dto/create-task.dto';
+import { TaskFilterQueryDto } from '../../common/dto/task-filter-query.dto';
 
 @Injectable()
 export class TasksService {
@@ -46,6 +47,19 @@ export class TasksService {
         creator: true,
         assignee: true,
         project: true,
+      },
+    });
+  }
+
+  async findAll(query: TaskFilterQueryDto) {
+    return this.prisma.task.findMany({
+      include: {
+        creator: true,
+        assignee: true,
+        project: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }

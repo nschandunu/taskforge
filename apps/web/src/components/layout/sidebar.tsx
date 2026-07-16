@@ -95,7 +95,10 @@ export function Sidebar() {
       
       <div className="shrink-0 p-4 border-t border-border">
         <div className="flex items-center gap-3 w-full">
-          <Avatar className="size-10 rounded-xl ring-1 ring-border/50 shadow-sm cursor-pointer hover:ring-border transition-all">
+          <Avatar 
+            onClick={() => router.push("/profile")}
+            className="size-10 rounded-xl ring-1 ring-border/50 shadow-sm cursor-pointer hover:ring-border transition-all"
+          >
             <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-semibold text-xs">
               {user?.name?.substring(0, 2).toUpperCase() || "U"}
             </AvatarFallback>

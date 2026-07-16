@@ -26,6 +26,14 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = React.useState(getUser());
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -69,19 +77,21 @@ export function Header() {
       </div>
 
       <div className="hidden lg:flex flex-1 items-center justify-center">
-        <div className="relative w-full max-w-md flex items-center group">
+        <form onSubmit={handleSearch} className="relative w-full max-w-md flex items-center group">
           <Search className="absolute left-3 size-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input 
             type="search" 
             placeholder="Search tasks, projects, or people..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-full bg-secondary/50 hover:bg-secondary/80 focus:bg-background pl-10 border-transparent focus-visible:border-primary/30 focus-visible:ring-primary/20 h-10 text-sm transition-all shadow-none" 
           />
-          <div className="absolute right-3 flex gap-1">
+          <div className="absolute right-3 flex gap-1 pointer-events-none">
             <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-              <span className="text-xs">⌘</span>K
+              <span className="text-xs">↵</span>
             </kbd>
           </div>
-        </div>
+        </form>
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3 px-4 md:gap-4 lg:px-8">
@@ -112,15 +122,18 @@ export function Header() {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60 rounded-xl border-border/50 bg-popover shadow-lg backdrop-blur-xl p-1 mt-1">
-            <DropdownMenuLabel className="font-normal p-3">
+            <DropdownMenuLabel 
+              onClick={() => router.push("/profile")}
+              className="font-normal p-3 cursor-pointer hover:bg-secondary rounded-lg transition-colors"
+            >
               <div className="flex flex-col space-y-1.5">
                 <p className="text-sm font-semibold leading-none text-foreground">{user?.name || "User"}</p>
                 <p className="text-xs leading-none text-muted-foreground font-medium">{user?.email || "user@example.com"}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border/50 -mx-1" />
-            <DropdownMenuItem disabled className="cursor-default text-muted-foreground rounded-lg my-0.5 px-3 py-2">
-              <User className="mr-2 size-4" />
+            <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer text-foreground focus:bg-secondary rounded-lg my-0.5 px-3 py-2 transition-colors">
+              <User className="mr-2 size-4 text-muted-foreground" />
               <span className="font-medium">Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer text-foreground focus:bg-secondary rounded-lg my-0.5 px-3 py-2 transition-colors">

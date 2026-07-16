@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { ActivitiesService } from '../../activities/services/activities.service';
 
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { AssignTaskDto } from '../dto/assign-task.dto';
@@ -19,6 +20,7 @@ import { getPagination } from '../../common/utils/pagination.util';
 export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly activitiesService: ActivitiesService,
   ) {}
 
   async create(

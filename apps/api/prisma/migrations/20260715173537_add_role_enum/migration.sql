@@ -1,0 +1,2 @@
+-- CreateEnum
+CREATE TYPE "RoleType" AS ENUM ('ADMIN', 'PROJECT_MANAGER', 'TEAM_MEMBER');

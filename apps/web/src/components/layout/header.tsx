@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getUnreadCount } from "@/services/notifications.service";
 import { Search, Bell, Menu, LogOut, Settings as SettingsIcon, User } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,12 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = React.useState(getUser());
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: getUnreadCount,
+    refetchInterval: 60000,
+  });
   
   React.useEffect(() => {
     setUser(getUser());
@@ -69,8 +77,18 @@ export function Header() {
           />
         </div>
         
-        <Button variant="ghost" size="icon" className="text-[#6B7280] hover:text-[#111827]">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-[#6B7280] hover:text-[#111827] relative"
+          onClick={() => router.push("/notifications")}
+        >
           <Bell className="size-5" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#DC2626] px-1 text-[9px] font-medium text-white ring-2 ring-white">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
           <span className="sr-only">Notifications</span>
         </Button>
         

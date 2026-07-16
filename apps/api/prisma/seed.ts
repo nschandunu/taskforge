@@ -74,7 +74,7 @@ async function main() {
 
   // Generate Projects
   console.log(`Generating ${projectTemplates.length} projects...`);
-  const createdProjects = [];
+  const createdProjects: any[] = [];
   for (const template of projectTemplates) {
     const owner = randomElement(users);
     const p = await prisma.project.create({
@@ -106,7 +106,7 @@ async function main() {
 
   // Generate Tasks
   console.log(`Generating tasks for projects...`);
-  const createdTasks = [];
+  const createdTasks: any[] = [];
   for (const project of createdProjects) {
     const numTasks = randomInt(4, 8);
     const projectMembers = await prisma.projectMember.findMany({ where: { projectId: project.id } });

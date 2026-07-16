@@ -92,7 +92,8 @@ function ProjectProgress({ projectId }: { projectId: string }) {
       <div className="h-2 w-full overflow-hidden rounded-full bg-secondary border border-border/50">
         <motion.div 
           initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
+          whileInView={{ width: `${percentage}%` }}
+          viewport={{ once: true }}
           transition={{ duration: 1, ease: "easeOut" }}
           className="h-full bg-primary" 
         />
@@ -132,7 +133,7 @@ function ProjectDetailsDrawer({ projectId, isOpen, onClose }: { projectId: strin
             </Alert>
           </div>
         ) : (
-          <div className="flex flex-col animate-in fade-in pb-8">
+          <div className="flex flex-col pb-8">
             <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-6 py-8 border-b border-border/50">
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="outline" className={
@@ -468,7 +469,7 @@ export default function ProjectsPage() {
         >
           {filteredProjects.map((project) => (
             <motion.div variants={itemVariants} key={project.id}>
-              <Card className="flex flex-col rounded-2xl border-border/40 bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-1 hover:border-border group h-full">
+              <Card className="flex flex-col rounded-2xl border-border/40 bg-card shadow-sm transition-all duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 group h-full">
                 <CardHeader className="flex flex-row items-start justify-between pb-4">
                   <div className="space-y-1.5 flex-1 min-w-0 pr-4">
                     <CardTitle className="text-lg font-bold text-foreground truncate group-hover:text-primary transition-colors">

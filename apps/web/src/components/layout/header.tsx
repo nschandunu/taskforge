@@ -89,7 +89,7 @@ export function Header() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="text-muted-foreground hover:text-foreground relative rounded-xl hover:bg-secondary/80 transition-colors"
+          className="text-muted-foreground hover:text-foreground relative rounded-xl hover:bg-secondary/80 transition-all duration-[200ms] ease-out hover:scale-[1.05] active:scale-[0.95]"
           onClick={() => router.push("/notifications")}
         >
           <Bell className="size-[1.2rem]" />

@@ -137,7 +137,7 @@ export default function NotificationsPage() {
   }) || [];
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col space-y-8 animate-in fade-in duration-300">
+    <div className="mx-auto flex w-full max-w-4xl flex-col space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
         <div className="space-y-1.5">
@@ -230,14 +230,14 @@ export default function NotificationsPage() {
                     layout
                     key={notification.id}
                     onClick={() => handleMarkAsRead(notification.id, notification.isRead)}
-                    className={`group relative flex cursor-pointer gap-4 rounded-2xl border shadow-sm p-5 transition-all overflow-hidden ${
+                    className={`group relative flex cursor-pointer gap-4 rounded-2xl border shadow-sm p-5 transition-all duration-200 ease-out hover:scale-[1.01] overflow-hidden ${
                       notification.isRead 
                         ? "border-border/60 bg-card hover:border-border hover:shadow-md" 
                         : "border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-md"
                     }`}
                   >
                     {!notification.isRead && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary rounded-l-2xl" />
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary rounded-l-2xl animate-pulse duration-1000" />
                     )}
                     
                     <div className={`mt-0.5 shrink-0 p-2 rounded-xl bg-background shadow-sm border border-border/50 ${ICON_COLORS[notification.type]}`}>

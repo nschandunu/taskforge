@@ -356,7 +356,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-140px)] flex-col space-y-6 animate-in fade-in duration-300">
+    <div className="flex h-[calc(100vh-140px)] flex-col space-y-6">
       <div className="flex shrink-0 flex-col sm:flex-row justify-between sm:items-start gap-4">
         <div className="space-y-1.5">
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Tasks</h2>
@@ -530,7 +530,7 @@ export default function TasksPage() {
                           <SortableTaskCard key={task.id} task={task} onClick={() => handleTaskClick(task)} />
                         ))}
                         {columnTasks.length === 0 && (
-                          <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-border/60 bg-transparent">
+                          <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-border/60 bg-transparent transition-colors hover:bg-secondary/50 hover:border-primary/30">
                             <span className="text-sm font-semibold text-muted-foreground/60">Drop tasks here</span>
                           </div>
                         )}
@@ -544,7 +544,7 @@ export default function TasksPage() {
         </div>
         <DragOverlay>
           {activeTask ? (
-            <div className="opacity-100 shadow-2xl ring-2 ring-primary/50 rotate-3 scale-105 transition-transform cursor-grabbing">
+            <div className="opacity-100 shadow-xl ring-1 ring-border rotate-2 scale-[1.02] transition-transform cursor-grabbing duration-200">
               <SortableTaskCard task={activeTask} onClick={() => {}} />
             </div>
           ) : null}

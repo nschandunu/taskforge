@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion, type Variants } from "framer-motion";
+import { CountUp } from "@/components/ui/count-up";
 
 function formatRelativeTime(dateString: string): string {
   try {
@@ -79,7 +80,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-7xl flex-col space-y-8 animate-in fade-in duration-300">
+      <div className="mx-auto flex w-full max-w-7xl flex-col space-y-8">
         <div className="space-y-2">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-5 w-96" />
@@ -215,7 +216,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <div className="text-4xl font-extrabold text-foreground tracking-tight">{stat.value}</div>
+              <div className="text-4xl font-extrabold text-foreground tracking-tight">
+                <CountUp to={stat.value} duration={0.8} />
+              </div>
               <p className="text-sm font-medium text-muted-foreground mt-2">{stat.subtitle}</p>
             </div>
           </motion.div>

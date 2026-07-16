@@ -345,31 +345,31 @@ Password:
 
 ## Login
 
-  <img src="./assets/login.png" alt="TaskForge Banner" width="100%">
+  <img src="./assets/login.png" alt="Login Banner" width="100%">
 
 ---
 
 ## Dashboard
 
-  <img src="./assets/dashboard.png" alt="TaskForge Banner" width="100%">
+  <img src="./assets/dashboard.png" alt="Dashboard Banner" width="100%">
 
 ---
 
 ## Projects
 
-  <img src="./assets/projects.png" alt="TaskForge Banner" width="100%">
+  <img src="./assets/projects.png" alt="Projects Banner" width="100%">
 
 ---
 
 ## Kanban Board
 
-  <img src="./assets/tasks.png" alt="TaskForge Banner" width="100%">
+  <img src="./assets/tasks.png" alt="Tasks Banner" width="100%">
 
 ---
 
 ## Notifications
 
-  <img src="./assets/notifications.png" alt="TaskForge Banner" width="100%">
+  <img src="./assets/notifications.png" alt="Notifications Banner" width="100%">
 
 ---
 
@@ -377,11 +377,11 @@ Password:
 
 Additional documentation is available in the `docs/` directory.
 
-| Document | Description |
-|----------|-------------|
-| ARCHITECTURE.md | Overall system architecture |
-| API.md | API design and conventions |
-| DECISIONS.md | Architectural and technology decisions |
+| Document        | Description                            |
+| --------------- | -------------------------------------- |
+| ARCHITECTURE.md | Overall system architecture            |
+| API.md          | API design and conventions             |
+| DECISIONS.md    | Architectural and technology decisions |
 
 ---
 

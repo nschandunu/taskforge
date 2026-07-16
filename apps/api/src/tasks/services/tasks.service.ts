@@ -244,4 +244,14 @@ export class TasksService {
       },
     });
   }
+
+  async remove(id: string) {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+    if (!task) {
+      throw new NotFoundException('Task not found.');
+    }
+    return this.prisma.task.delete({
+      where: { id },
+    });
+  }
 }

@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, GripVertical, AlertCircle, Calendar, MessageSquare, Clock, FolderKanban, Loader2 } from "lucide-react";
+import { Plus, GripVertical, AlertCircle, Calendar, MessageSquare, Clock, FolderKanban, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { 
@@ -33,7 +33,7 @@ import {
   updateTaskDueDate,
   assignTask
 } from "@/services/tasks.service";
-import { getProjects, getProjectDetails } from "@/services/projects.service";
+import { getProjects, getProjectDetails, getProjectMembers } from "@/services/projects.service";
 import type { Task, TaskStatus } from "@/types/tasks";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const taskFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -58,6 +64,7 @@ const taskFormSchema = z.object({
   projectId: z.string().min(1, "Project is required"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   dueDate: z.string().optional(),
+  assigneeId: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -178,6 +185,13 @@ export default function TasksPage() {
       priority: "MEDIUM",
       dueDate: "",
     },
+  });
+
+  const selectedProjectId = form.watch("projectId");
+  const { data: projectMembers, isLoading: isLoadingMembers } = useQuery({
+    queryKey: ["projectMembers", selectedProjectId],
+    queryFn: () => getProjectMembers(selectedProjectId!),
+    enabled: !!selectedProjectId,
   });
 
   const createMutation = useMutation({
@@ -376,6 +390,65 @@ export default function TasksPage() {
               </select>
               {form.formState.errors.projectId && (
                 <p className="text-xs text-red-500">{form.formState.errors.projectId.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#111827]">Assignee (Optional)</label>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full justify-between border-[#E5E7EB] text-left font-normal bg-white hover:bg-[#FAFAFA]"
+                    disabled={!selectedProjectId || isLoadingMembers}
+                  >
+                    {form.watch("assigneeId") ? (() => {
+                      const selectedMember = projectMembers?.find(m => m.userId === form.watch("assigneeId"));
+                      if (!selectedMember) return "Select Assignee";
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="size-5">
+                            <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[9px] font-medium">
+                              {selectedMember.user.firstName.charAt(0)}{selectedMember.user.lastName.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-[#111827] font-medium">{selectedMember.user.firstName} {selectedMember.user.lastName}</span>
+                        </div>
+                      );
+                    })() : <span className="text-[#6B7280]">Unassigned</span>}
+                    <ChevronDown className="size-4 opacity-50 text-[#6B7280]" />
+                  </Button>
+                } />
+                <DropdownMenuContent className="w-[425px] p-2 rounded-xl shadow-lg border-[#E5E7EB]">
+                  <DropdownMenuItem 
+                    onClick={() => form.setValue("assigneeId", "")}
+                    className="cursor-pointer mb-1 p-2 focus:bg-[#FAFAFA] rounded-lg"
+                  >
+                    <span className="text-sm text-[#6B7280] font-medium">Unassigned</span>
+                  </DropdownMenuItem>
+                  {projectMembers?.map(member => (
+                    <DropdownMenuItem 
+                      key={member.id} 
+                      onClick={() => form.setValue("assigneeId", member.userId)}
+                      className="flex items-center gap-3 cursor-pointer p-2 focus:bg-[#FAFAFA] rounded-lg mb-1 last:mb-0 transition-colors"
+                    >
+                      <Avatar className="size-9 shadow-sm border border-[#E5E7EB]">
+                        <AvatarFallback className="bg-gradient-to-br from-[#2563EB]/10 to-transparent text-[#2563EB] text-xs font-semibold">
+                          {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-[#111827]">{member.user.firstName} {member.user.lastName}</span>
+                        <span className="text-[10px] text-[#6B7280] font-medium tracking-wide uppercase">{member.role}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {!selectedProjectId && (
+                <p className="text-[10px] text-[#6B7280] font-medium">Select a project first to view its team members.</p>
               )}
             </div>
             

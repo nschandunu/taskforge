@@ -293,13 +293,13 @@ export default function DashboardPage() {
                     </div>
                     <Avatar className="size-10 border-2 border-white ring-1 ring-[#E5E7EB] shadow-sm transition-transform duration-200 group-hover:scale-105">
                       <AvatarFallback className="bg-[#111827] text-white text-xs font-semibold">
-                        {activity.user.name.substring(0, 2).toUpperCase()}
+                        {activity.user.firstName?.charAt(0)}{activity.user.lastName?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="flex flex-col pt-1">
                     <p className="text-sm text-[#111827] leading-tight">
-                      <span className="font-bold">{activity.user.name}</span>{" "}
+                      <span className="font-bold">{activity.user.firstName} {activity.user.lastName}</span>{" "}
                       <span className="text-[#6B7280]">{activity.action}</span>
                     </p>
                     <p className="text-xs font-medium text-[#6B7280] mt-1.5">{formatRelativeTime(activity.time)}</p>

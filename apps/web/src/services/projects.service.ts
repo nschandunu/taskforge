@@ -55,3 +55,12 @@ export async function deleteProject(id: string): Promise<void> {
   });
   if (!data.success) throw new Error(data.message || "Failed to delete project");
 }
+
+export async function getProjectMembers(projectId: string): Promise<any[]> {
+  const token = getToken();
+  const { data } = await api.get(`/projects/${projectId}/members`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to fetch project members");
+  return data.data;
+}

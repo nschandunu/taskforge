@@ -1,3 +1,22 @@
+<p align="center">
+  <img src="./assets/banner.png" alt="TaskForge Banner" width="100%">
+</p>
+
+<h1 align="center">TaskForge</h1>
+
+<p align="center">
+Modern Project Management Platform built with Next.js, NestJS, PostgreSQL & Prisma.
+</p>
+
+<p align="center">
+<img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black">
+<img alt="NestJS" src="https://img.shields.io/badge/NestJS-11-E0234E">
+<img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-17-336791">
+<img alt="Prisma" src="https://img.shields.io/badge/Prisma-ORM-2D3748">
+<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6">
+<img alt="License" src="https://img.shields.io/badge/License-MIT-green">
+</p>
+
 # TaskForge
 
 A modern full-stack project management platform built with **Next.js**, **NestJS**, **PostgreSQL**, and **Prisma**.

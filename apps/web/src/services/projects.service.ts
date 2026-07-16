@@ -16,3 +16,27 @@ export async function getProjects(): Promise<ProjectsData> {
 
   return data.data;
 }
+export interface CreateProjectPayload {
+  name: string;
+  description?: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW";
+  startDate?: string;
+  dueDate?: string;
+}
+
+export async function createProject(payload: CreateProjectPayload): Promise<void> {
+  const token = getToken();
+  const { data } = await api.post("/projects", payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to create project");
+}
+
+export async function getProjectDetails(id: string): Promise<any> {
+  const token = getToken();
+  const { data } = await api.get(`/projects/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to fetch project details");
+  return data.data;
+}

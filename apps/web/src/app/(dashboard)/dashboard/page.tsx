@@ -1,8 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FolderKanban, CheckSquare, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FolderKanban, CheckSquare, CheckCircle2, Clock, AlertCircle, Activity, PlusCircle, Edit3, Trash2 } from "lucide-react";
 import { getDashboard } from "@/services/dashboard.service";
+import { getProjects } from "@/services/projects.service";
+import { getAllTasks } from "@/services/tasks.service";
 import { getUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,48 +13,111 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+
+function formatRelativeTime(dateString: string): string {
+  try {
+    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const diffInMs = date.getTime() - Date.now();
+    const diffInSeconds = Math.round(diffInMs / 1000);
+    const diffInMinutes = Math.round(diffInSeconds / 60);
+    const diffInHours = Math.round(diffInMinutes / 60);
+    const diffInDays = Math.round(diffInHours / 24);
+
+    if (Math.abs(diffInDays) >= 1) return rtf.format(diffInDays, "day");
+    if (Math.abs(diffInHours) >= 1) return rtf.format(diffInHours, "hour");
+    if (Math.abs(diffInMinutes) >= 1) return rtf.format(diffInMinutes, "minute");
+    return rtf.format(diffInSeconds, "second");
+  } catch {
+    return dateString;
+  }
+}
+
+function getActivityIcon(action: string) {
+  const lower = action.toLowerCase();
+  if (lower.includes("creat") || lower.includes("add")) return <PlusCircle className="size-4 text-[#16A34A]" />;
+  if (lower.includes("delet") || lower.includes("remov")) return <Trash2 className="size-4 text-[#DC2626]" />;
+  if (lower.includes("updat") || lower.includes("edit")) return <Edit3 className="size-4 text-[#F59E0B]" />;
+  return <Activity className="size-4 text-[#2563EB]" />;
+}
 
 export default function DashboardPage() {
   const user = getUser();
-  const { data, isLoading, isError, error } = useQuery({
+  const router = useRouter();
+
+  const { data, isLoading: isDashboardLoading, isError, error } = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboard,
   });
 
+  const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => getProjects(),
+  });
+
+  const { data: tasksData, isLoading: isTasksLoading } = useQuery({
+    queryKey: ["tasks", "all"],
+    queryFn: getAllTasks,
+  });
+
+  const isLoading = isDashboardLoading || isProjectsLoading || isTasksLoading;
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-8 animate-in fade-in duration-300">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48 rounded-md" />
           <Skeleton className="h-4 w-64 rounded-md" />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="rounded-xl border-[#E5E7EB] shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div key={i} className="flex flex-col gap-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm">
+              <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-24 rounded-md" />
-                <Skeleton className="size-4 rounded-full" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2 rounded-md" />
-                <Skeleton className="h-3 w-28 rounded-md" />
-              </CardContent>
-            </Card>
+                <Skeleton className="size-8 rounded-full" />
+              </div>
+              <Skeleton className="h-10 w-16 mt-2 rounded-md" />
+              <Skeleton className="h-3 w-32 mt-1 rounded-md" />
+            </div>
           ))}
         </div>
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Skeleton className="h-[300px] w-full rounded-xl" />
-          <Skeleton className="h-[300px] w-full rounded-xl" />
+          <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
+            <Skeleton className="h-6 w-32 rounded-md mb-2" />
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-md" />
+            ))}
+          </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
+            <Skeleton className="h-6 w-32 rounded-md mb-2" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="size-10 rounded-full shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-3/4 rounded-md" />
+                  <Skeleton className="h-3 w-1/4 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <Skeleton className="h-[400px] w-full rounded-xl" />
+        
+        <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
+          <Skeleton className="h-6 w-32 rounded-md mb-2" />
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-md" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-6">
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Dashboard</h2>
           <p className="text-[#6B7280]">Welcome back, {user?.name || "User"}</p>
@@ -69,110 +135,122 @@ export default function DashboardPage() {
 
   if (!data) return null;
 
-  const recentProjects = data.recentProjects || [];
+  const recentProjects = projectsData?.items?.slice(0, 5) || [];
   const recentActivities = data.recentActivities || data.recentActivity || [];
-  const recentTasks = data.recentTasks || [];
+  const recentTasks = tasksData?.items?.slice(0, 5) || [];
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Dashboard</h2>
-        <div className="flex flex-col">
-          <p className="text-[#6B7280]">Welcome back, {user?.name || "User"}</p>
-          <p className="text-sm font-medium text-[#111827] mt-3 mb-1">Today's overview</p>
-          <Separator className="bg-[#E5E7EB] w-full max-w-[200px]" />
-        </div>
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-8 animate-in fade-in duration-300">
+      
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <h2 className="text-3xl font-bold tracking-tight text-[#111827]">Dashboard</h2>
+        <p className="text-[#6B7280] text-base">Welcome back, {user?.name || "User"}. Here is what's happening today.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#111827]">Projects</CardTitle>
-            <FolderKanban className="size-4 text-[#6B7280]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#111827]">{data.overview.totalProjects}</div>
-            <p className="text-xs text-[#6B7280] mt-1">+2 from last month</p>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          { 
+            title: "Projects", 
+            value: data.overview.totalProjects, 
+            subtitle: "Active workspace projects",
+            icon: FolderKanban,
+            color: "text-[#2563EB]",
+            bg: "bg-[#2563EB]/5"
+          },
+          { 
+            title: "Tasks", 
+            value: data.overview.totalTasks, 
+            subtitle: "Total assigned tasks",
+            icon: CheckSquare,
+            color: "text-[#111827]",
+            bg: "bg-[#111827]/5"
+          },
+          { 
+            title: "Completed", 
+            value: data.overview.completedTasks, 
+            subtitle: "Tasks successfully finished",
+            icon: CheckCircle2,
+            color: "text-[#16A34A]",
+            bg: "bg-[#16A34A]/5"
+          },
+          { 
+            title: "Overdue", 
+            value: data.overview.overdueTasks, 
+            subtitle: "Requires immediate attention",
+            icon: Clock,
+            color: "text-[#DC2626]",
+            bg: "bg-[#DC2626]/5"
+          }
+        ].map((stat, i) => (
+          <Card key={i} className="group rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#2563EB]/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-[#6B7280] uppercase tracking-wider">{stat.title}</CardTitle>
+              <div className={`flex size-10 items-center justify-center rounded-full ${stat.bg} transition-colors duration-200 group-hover:bg-[#2563EB]/10`}>
+                <stat.icon className={`size-5 ${stat.color} transition-transform duration-200 group-hover:scale-110`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-[#111827]">{stat.value}</div>
+              <p className="text-xs font-medium text-[#6B7280] mt-2">{stat.subtitle}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-7">
         
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#111827]">Tasks</CardTitle>
-            <CheckSquare className="size-4 text-[#6B7280]" />
+        {/* Recent Projects */}
+        <Card className="lg:col-span-4 rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col transition-all duration-200 hover:shadow-md">
+          <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
+            <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
+              <FolderKanban className="size-5 text-[#2563EB]" />
+              Recent Projects
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#111827]">{data.overview.totalTasks}</div>
-            <p className="text-xs text-[#6B7280] mt-1">+12 from last week</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#111827]">Completed Tasks</CardTitle>
-            <CheckCircle2 className="size-4 text-[#16A34A]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#111827]">{data.overview.completedTasks}</div>
-            <p className="text-xs text-[#6B7280] mt-1">+8 this week</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#111827]">Overdue Tasks</CardTitle>
-            <Clock className="size-4 text-[#DC2626]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#111827]">{data.overview.overdueTasks}</div>
-            <p className="text-xs text-[#DC2626] mt-1">-3 from yesterday</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-[#111827] text-lg">Recent Projects</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 px-0 overflow-x-auto">
+          <CardContent className="flex-1 px-0 overflow-x-auto pt-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-[#E5E7EB] hover:bg-transparent">
-                  <TableHead className="text-[#6B7280] px-6">Name</TableHead>
-                  <TableHead className="text-[#6B7280]">Status</TableHead>
-                  <TableHead className="text-[#6B7280]">Priority</TableHead>
-                  <TableHead className="text-[#6B7280] px-6 text-right">Owner</TableHead>
+                  <TableHead className="text-[#6B7280] px-6 font-semibold py-4">Name</TableHead>
+                  <TableHead className="text-[#6B7280] font-semibold py-4">Status</TableHead>
+                  <TableHead className="text-[#6B7280] font-semibold py-4">Priority</TableHead>
+                  <TableHead className="text-[#6B7280] px-6 text-right font-semibold py-4">Owner</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentProjects.map((project) => (
-                  <TableRow key={project.id} className="border-[#E5E7EB] hover:bg-[#FAFAFA]">
-                    <TableCell className="font-medium text-[#111827] px-6">{project.name}</TableCell>
-                    <TableCell>
+                  <TableRow 
+                    key={project.id} 
+                    onClick={() => router.push('/projects')}
+                    className="border-[#E5E7EB]/50 hover:bg-[#FAFAFA] cursor-pointer transition-colors duration-150 group"
+                  >
+                    <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{project.name}</TableCell>
+                    <TableCell className="py-4">
                       <Badge variant="outline" className={
-                        project.status === "ACTIVE" ? "border-[#2563EB] text-[#2563EB]" :
-                        project.status === "COMPLETED" ? "border-[#16A34A] text-[#16A34A]" :
-                        "border-[#F59E0B] text-[#F59E0B]"
+                        project.status === "ACTIVE" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
+                        project.status === "COMPLETED" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
+                        "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5"
                       }>
-                        {project.status}
+                        {project.status.replace("_", " ")}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-4">
                       <Badge variant="outline" className={
-                        project.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626]" :
-                        project.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B]" :
-                        "border-[#6B7280] text-[#6B7280]"
+                        project.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
+                        project.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
+                        "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
                       }>
                         {project.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-[#6B7280]">{project.owner.name}</span>
-                        <Avatar className="size-6">
-                          <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[10px]">
-                            {project.owner.name.substring(0, 2).toUpperCase()}
+                    <TableCell className="px-6 text-right py-4">
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="text-sm font-medium text-[#111827]">{project.owner.firstName} {project.owner.lastName}</span>
+                        <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
+                          <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs font-semibold">
+                            {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
@@ -181,8 +259,11 @@ export default function DashboardPage() {
                 ))}
                 {recentProjects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-[#6B7280] py-6">
-                      No recent projects.
+                    <TableCell colSpan={4} className="h-48 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <FolderKanban className="size-8 text-[#E5E7EB]" />
+                        <p className="text-[#6B7280] font-medium">No recent projects found</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -191,86 +272,107 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-[#111827] text-lg">Recent Activity</CardTitle>
+        {/* Recent Activity */}
+        <Card className="lg:col-span-3 rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col transition-all duration-200 hover:shadow-md">
+          <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
+            <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
+              <Activity className="size-5 text-[#2563EB]" />
+              Activity Feed
+            </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1">
-            <div className="space-y-6 pl-2">
+          <CardContent className="flex-1 p-6">
+            <div className="space-y-6">
               {recentActivities.map((activity, index) => (
-                <div key={activity.id} className="relative flex gap-4">
+                <div key={activity.id} className="relative flex gap-4 group">
                   {index !== recentActivities.length - 1 && (
-                    <div className="absolute left-4 top-10 -bottom-6 w-px bg-[#E5E7EB]" />
+                    <div className="absolute left-5 top-12 bottom-[-1.5rem] w-px bg-[#E5E7EB] transition-colors group-hover:bg-[#2563EB]/30" />
                   )}
                   <div className="relative mt-1">
-                    <Avatar className="size-8 border-2 border-white ring-1 ring-[#E5E7EB]">
-                      <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs">
+                    <div className="absolute -bottom-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full bg-white ring-1 ring-white">
+                      {getActivityIcon(activity.action)}
+                    </div>
+                    <Avatar className="size-10 border-2 border-white ring-1 ring-[#E5E7EB] shadow-sm transition-transform duration-200 group-hover:scale-105">
+                      <AvatarFallback className="bg-[#111827] text-white text-xs font-semibold">
                         {activity.user.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  <div className="flex flex-col">
-                    <p className="text-sm text-[#111827]">
-                      <span className="font-medium">{activity.user.name}</span> {activity.action}
+                  <div className="flex flex-col pt-1">
+                    <p className="text-sm text-[#111827] leading-tight">
+                      <span className="font-bold">{activity.user.name}</span>{" "}
+                      <span className="text-[#6B7280]">{activity.action}</span>
                     </p>
-                    <p className="text-xs text-[#6B7280] mt-0.5">{activity.time}</p>
+                    <p className="text-xs font-medium text-[#6B7280] mt-1.5">{formatRelativeTime(activity.time)}</p>
                   </div>
                 </div>
               ))}
               {recentActivities.length === 0 && (
-                <p className="text-center text-[#6B7280] py-4 text-sm">
-                  No recent activity.
-                </p>
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <Activity className="size-8 text-[#E5E7EB]" />
+                  <p className="text-center text-[#6B7280] font-medium">No recent activity</p>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-[#111827] text-lg">Recent Tasks</CardTitle>
+      {/* Recent Tasks */}
+      <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+        <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
+          <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
+            <CheckSquare className="size-5 text-[#2563EB]" />
+            Active Tasks
+          </CardTitle>
         </CardHeader>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-[#E5E7EB] hover:bg-transparent">
-                <TableHead className="text-[#6B7280] px-6">Task Name</TableHead>
-                <TableHead className="text-[#6B7280]">Status</TableHead>
-                <TableHead className="text-[#6B7280]">Priority</TableHead>
-                <TableHead className="text-[#6B7280]">Due Date</TableHead>
-                <TableHead className="text-[#6B7280] px-6 text-right">Assignee</TableHead>
+                <TableHead className="text-[#6B7280] px-6 font-semibold py-4">Task Name</TableHead>
+                <TableHead className="text-[#6B7280] font-semibold py-4">Status</TableHead>
+                <TableHead className="text-[#6B7280] font-semibold py-4">Priority</TableHead>
+                <TableHead className="text-[#6B7280] font-semibold py-4">Due Date</TableHead>
+                <TableHead className="text-[#6B7280] px-6 text-right font-semibold py-4">Assignee</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recentTasks.map((task) => (
-                <TableRow key={task.id} className="border-[#E5E7EB] hover:bg-[#FAFAFA]">
-                  <TableCell className="font-medium text-[#111827] px-6">{task.name}</TableCell>
-                  <TableCell>
+                <TableRow 
+                  key={task.id} 
+                  onClick={() => router.push('/tasks')}
+                  className="border-[#E5E7EB]/50 hover:bg-[#FAFAFA] cursor-pointer transition-colors duration-150 group"
+                >
+                  <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{task.name}</TableCell>
+                  <TableCell className="py-4">
                     <Badge variant="outline" className={
-                      task.status === "DONE" ? "border-[#16A34A] text-[#16A34A]" :
-                      task.status === "IN_PROGRESS" ? "border-[#2563EB] text-[#2563EB]" :
-                      "border-[#6B7280] text-[#6B7280]"
+                      task.status === "DONE" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
+                      task.status === "IN_PROGRESS" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
+                      "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
                     }>
                       {task.status.replace("_", " ")}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-4">
                     <Badge variant="outline" className={
-                      task.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626]" :
-                      task.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B]" :
-                      "border-[#6B7280] text-[#6B7280]"
+                      task.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
+                      task.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
+                      "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
                     }>
                       {task.priority}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-[#6B7280] text-sm">{task.dueDate}</TableCell>
-                  <TableCell className="px-6 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="text-sm text-[#6B7280]">{task.assignee.name}</span>
-                      <Avatar className="size-6">
-                        <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[10px]">
-                          {task.assignee.name.substring(0, 2).toUpperCase()}
+                  <TableCell className="py-4 text-[#111827] font-medium text-sm">
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No due date"}
+                  </TableCell>
+                  <TableCell className="px-6 text-right py-4">
+                    <div className="flex items-center justify-end gap-3">
+                      <span className="text-sm font-medium text-[#111827]">
+                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : "Unassigned"}
+                      </span>
+                      <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
+                        <AvatarFallback className="bg-[#111827] text-white text-xs font-semibold">
+                          {task.assignee ? `${task.assignee.firstName.charAt(0)}${task.assignee.lastName.charAt(0)}` : "U"}
                         </AvatarFallback>
                       </Avatar>
                     </div>
@@ -279,8 +381,11 @@ export default function DashboardPage() {
               ))}
               {recentTasks.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[#6B7280] py-6">
-                    No recent tasks.
+                  <TableCell colSpan={5} className="h-48 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <CheckSquare className="size-8 text-[#E5E7EB]" />
+                      <p className="text-[#6B7280] font-medium">No recent tasks found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}

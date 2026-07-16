@@ -16,16 +16,20 @@ export async function getNotifications(): Promise<Notification[]> {
 }
 
 export async function getUnreadCount(): Promise<number> {
-  const token = getToken();
-  const { data } = await api.get<UnreadCountResponse>("/notifications/unread-count", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  try {
+    const token = getToken();
+    const { data } = await api.get<UnreadCountResponse>("/notifications/unread-count", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  if (!data.success) {
-    throw new Error(data.message || "Failed to fetch unread count");
+    if (!data.success) {
+      return 0;
+    }
+
+    return data?.data?.count ?? 0;
+  } catch (error) {
+    return 0;
   }
-
-  return data.data.count;
 }
 
 export async function markNotificationAsRead(id: string): Promise<void> {

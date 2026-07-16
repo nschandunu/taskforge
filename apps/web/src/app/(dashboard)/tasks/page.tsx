@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { 
   DndContext, 
   DragOverlay, 
@@ -16,12 +19,22 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, GripVertical, AlertCircle, Calendar, MessageSquare, Clock, FolderKanban } from "lucide-react";
+import { Plus, GripVertical, AlertCircle, Calendar, MessageSquare, Clock, FolderKanban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { getAllTasks, updateTaskStatus, getTaskDetails, getTaskComments, createTaskComment } from "@/services/tasks.service";
+import { 
+  getAllTasks, 
+  updateTaskStatus, 
+  getTaskDetails, 
+  getTaskComments, 
+  createTaskComment,
+  createTask,
+  updateTaskPriority,
+  updateTaskDueDate,
+  assignTask
+} from "@/services/tasks.service";
+import { getProjects, getProjectDetails } from "@/services/projects.service";
 import type { Task, TaskStatus } from "@/types/tasks";
-import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +42,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const taskFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  projectId: z.string().min(1, "Project is required"),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  dueDate: z.string().optional(),
+});
+
+type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "TODO", title: "To Do" },
@@ -114,10 +146,16 @@ export default function TasksPage() {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["tasks"],
     queryFn: getAllTasks,
+  });
+
+  const { data: projectsData } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => getProjects(),
   });
 
   useEffect(() => {
@@ -125,6 +163,34 @@ export default function TasksPage() {
       setTasks(data.items);
     }
   }, [data]);
+
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      projectId: "",
+      priority: "MEDIUM",
+      dueDate: "",
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (values: TaskFormValues) => createTask(values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task created successfully");
+      setIsCreateOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create task");
+    }
+  });
+
+  const onSubmit = (values: TaskFormValues) => {
+    createMutation.mutate(values);
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus; previousTasks: Task[] }) => updateTaskStatus(taskId, status),
@@ -199,7 +265,6 @@ export default function TasksPage() {
     const activeId = active.id as string;
     const activeTaskFinal = tasks.find(t => t.id === activeId);
     
-    // Check if status changed compared to server data
     const originalTask = data?.items.find(t => t.id === activeId);
     
     if (activeTaskFinal && originalTask && activeTaskFinal.status !== originalTask.status) {
@@ -261,17 +326,97 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-140px)] flex-col space-y-6">
+    <div className="flex h-[calc(100vh-140px)] flex-col space-y-6 animate-in fade-in duration-300">
       <div className="flex shrink-0 flex-col sm:flex-row justify-between sm:items-start gap-4">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Tasks</h2>
           <p className="text-[#6B7280]">Manage project tasks visually.</p>
         </div>
-        <Button className="rounded-lg bg-[#2563EB] text-[#FFFFFF] hover:bg-[#2563EB]/90 h-10 shadow-sm">
+        <Button 
+          onClick={() => setIsCreateOpen(true)}
+          className="rounded-lg bg-[#2563EB] text-[#FFFFFF] hover:bg-[#2563EB]/90 h-10 shadow-sm"
+        >
           <Plus className="mr-2 size-4" />
           New Task
         </Button>
       </div>
+
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+            <DialogDescription>
+              Fill out the details below to initialize a new task.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#111827]">Task Title</label>
+              <Input placeholder="e.g. Design Landing Page" {...form.register("title")} />
+              {form.formState.errors.title && (
+                <p className="text-xs text-red-500">{form.formState.errors.title.message}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#111827]">Project</label>
+              <select 
+                className="flex h-10 w-full rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                {...form.register("projectId")}
+              >
+                <option value="" disabled>Select a project</option>
+                {projectsData?.items.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              {form.formState.errors.projectId && (
+                <p className="text-xs text-red-500">{form.formState.errors.projectId.message}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#111827]">Description (Optional)</label>
+              <Input placeholder="Brief details about the task" {...form.register("description")} />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#111827]">Priority</label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  {...form.register("priority")}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#111827]">Due Date (Optional)</label>
+                <Input type="date" {...form.register("dueDate")} />
+              </div>
+            </div>
+            
+            <DialogFooter className="pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsCreateOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Create Task
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <DndContext 
         sensors={sensors} 
@@ -344,6 +489,39 @@ function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
     queryFn: () => getTaskComments(initialTask.id),
   });
 
+  const { data: projectDetails } = useQuery({
+    queryKey: ["project", task.projectId],
+    queryFn: () => getProjectDetails(task.projectId),
+    enabled: !!task.projectId,
+  });
+
+  const priorityMutation = useMutation({
+    mutationFn: (priority: "HIGH" | "MEDIUM" | "LOW") => updateTaskPriority(task.id, priority),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Priority updated");
+    }
+  });
+
+  const dueDateMutation = useMutation({
+    mutationFn: (dueDate: string) => updateTaskDueDate(task.id, new Date(dueDate).toISOString()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Due date updated");
+    }
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: (assigneeId: string) => assignTask(task.id, assigneeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Assignee updated");
+    }
+  });
+
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<{ content: string }>();
 
   const postCommentMutation = useMutation({
@@ -382,9 +560,17 @@ function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
             {task.priority}
           </Badge>
         </div>
-        <SheetTitle className="text-xl font-bold text-[#111827] leading-tight mb-2">
-          {task.name}
-        </SheetTitle>
+        
+        {/* Missing Backend Support Alert for Editing Title/Desc */}
+        <div className="group relative">
+          <SheetTitle className="text-xl font-bold text-[#111827] leading-tight mb-2">
+            {task.name}
+          </SheetTitle>
+          <div className="absolute inset-0 bg-[#FAFAFA]/50 hidden group-hover:flex items-center justify-center cursor-not-allowed opacity-0 group-hover:opacity-100 transition-opacity rounded" title="Edit Task Name (Not supported by backend)">
+            <span className="text-xs bg-[#111827] text-white px-2 py-1 rounded">Read Only</span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-1.5 text-sm text-[#6B7280] font-medium bg-[#FFFFFF] w-fit px-2 py-1 rounded-md border border-[#E5E7EB]">
           <FolderKanban className="size-3.5" />
           {task.project?.name || "No Project"}
@@ -392,53 +578,65 @@ function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
       </div>
 
       <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-        <div className="space-y-3">
+        <div className="space-y-3 group relative">
           <h4 className="text-sm font-semibold text-[#111827]">Description</h4>
           <p className="text-sm text-[#6B7280] leading-relaxed">
             {task.description || "No description provided for this task."}
           </p>
+          <div className="absolute inset-0 bg-[#FFFFFF]/50 hidden group-hover:flex items-center justify-center cursor-not-allowed opacity-0 group-hover:opacity-100 transition-opacity rounded" title="Edit Task Description (Not supported by backend)">
+            <span className="text-xs bg-[#111827] text-white px-2 py-1 rounded">Read Only</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
             <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Assignee</span>
-            <div className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[10px]">
-                  {task.assignee?.firstName?.charAt(0) || "U"}{task.assignee?.lastName?.charAt(0) || "N"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-[#111827] truncate">
-                {task.assignee?.firstName || "Unassigned"} {task.assignee?.lastName || ""}
-              </span>
-            </div>
+            <select 
+              className="w-full text-sm font-medium text-[#111827] bg-transparent border-0 focus:ring-0 cursor-pointer p-0 appearance-none"
+              value={task.assigneeId || ""}
+              onChange={(e) => assignMutation.mutate(e.target.value)}
+              disabled={!projectDetails?.members}
+            >
+              <option value="">Unassigned</option>
+              {projectDetails?.members?.map((m: any) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.user.firstName} {m.user.lastName}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
             <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Due Date</span>
-            <div className="flex items-center gap-2">
-              <Calendar className="size-4 text-[#6B7280]" />
-              <span className="text-sm font-medium text-[#111827]">
-                {task.dueDate 
-                  ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
-                  : "No due date"}
-              </span>
-            </div>
+            <input 
+              type="date" 
+              className="w-full text-sm font-medium text-[#111827] bg-transparent border-0 focus:ring-0 cursor-pointer p-0"
+              value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ""}
+              onChange={(e) => dueDateMutation.mutate(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
-            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Est. Hours</span>
-            <div className="flex items-center gap-2">
-              <Clock className="size-4 text-[#6B7280]" />
-              <span className="text-sm font-medium text-[#111827]">0h</span>
-            </div>
+            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Priority</span>
+            <select 
+              className="w-full text-sm font-medium text-[#111827] bg-transparent border-0 focus:ring-0 cursor-pointer p-0 appearance-none"
+              value={task.priority}
+              onChange={(e) => priorityMutation.mutate(e.target.value as any)}
+            >
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+            </select>
           </div>
 
-          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
+          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] relative group cursor-not-allowed">
             <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Actual Hours</span>
             <div className="flex items-center gap-2">
               <Clock className="size-4 text-[#16A34A]" />
               <span className="text-sm font-medium text-[#111827]">0h</span>
+            </div>
+            <div className="absolute inset-0 bg-[#FAFAFA]/50 hidden group-hover:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded" title="Edit Actual Hours (Not supported by backend)">
+              <span className="text-xs bg-[#111827] text-white px-2 py-1 rounded">Read Only</span>
             </div>
           </div>
         </div>

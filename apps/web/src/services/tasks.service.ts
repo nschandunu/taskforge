@@ -92,3 +92,43 @@ export async function createTaskComment(taskId: string, content: string): Promis
 
   if (!data.success) throw new Error(data.message || "Failed to create comment");
 }
+
+export interface CreateTaskPayload {
+  title: string;
+  description?: string;
+  projectId: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW";
+  dueDate?: string;
+}
+
+export async function createTask(payload: CreateTaskPayload): Promise<void> {
+  const token = getToken();
+  const { data } = await api.post<any>("/tasks", payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to create task");
+}
+
+export async function assignTask(taskId: string, assigneeId: string): Promise<void> {
+  const token = getToken();
+  const { data } = await api.patch<any>(`/tasks/${taskId}/assign`, { assigneeId }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to assign task");
+}
+
+export async function updateTaskPriority(taskId: string, priority: "HIGH" | "MEDIUM" | "LOW"): Promise<void> {
+  const token = getToken();
+  const { data } = await api.patch<any>(`/tasks/${taskId}/priority`, { priority }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to update priority");
+}
+
+export async function updateTaskDueDate(taskId: string, dueDate: string): Promise<void> {
+  const token = getToken();
+  const { data } = await api.patch<any>(`/tasks/${taskId}/due-date`, { dueDate }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to update due date");
+}

@@ -1,6 +1,9 @@
 generator client {
   provider = "prisma-client-js"
 }
+datasource db {
+  provider = "postgresql"
+}
 
 model TaskComment {
   id      String @id @default(uuid())
@@ -57,9 +60,6 @@ model TaskLabel {
   @@index([labelId])
 }
 
-datasource db {
-  provider = "postgresql"
-}
 
 enum RoleType {
   ADMIN
@@ -68,8 +68,9 @@ enum RoleType {
 }
 
 model Role {
-  id   String   @id @default(uuid())
-  name RoleType @unique
+  id          String   @id @default(uuid())
+  name        RoleType @unique
+  description String?
 
   users User[]
 
@@ -159,6 +160,16 @@ enum NotificationType {
   ERROR
 }
 
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  ASSIGN
+  COMMENT
+  ATTACHMENT
+}
+
 model Project {
   id          String  @id @default(uuid())
   name        String
@@ -181,6 +192,7 @@ model Project {
 
   @@index([ownerId])
   @@index([status])
+  @@index([priority])
 }
 
 model ProjectMember {
@@ -247,6 +259,7 @@ model Notification {
 
   title   String
   message String
+  link    String?
 
   type NotificationType @default(INFO)
 
@@ -281,7 +294,7 @@ model RefreshToken {
 model ActivityLog {
   id String @id @default(uuid())
 
-  action   String
+  action   ActivityAction
   entity   String
   entityId String?
 
@@ -293,3 +306,4 @@ model ActivityLog {
   @@index([userId])
   @@index([entity])
 }
+

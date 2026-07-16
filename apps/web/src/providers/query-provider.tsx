@@ -8,7 +8,7 @@ export function QueryProvider({
 }: {
   children: ReactNode;
 }) {
-  const [client] = useState(
+  const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
@@ -21,7 +21,7 @@ export function QueryProvider({
   );
 
   return (
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
   );

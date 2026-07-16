@@ -148,15 +148,28 @@ async function main() {
 
   // Generate Notifications
   console.log(`Generating 35 notifications...`);
-  const notificationTitles = ['Task Assigned', 'Project Update', 'Deployment Success', 'New Comment', 'Urgent Action Required'];
+  
+  const notificationTemplates = [
+    { title: 'Task Assigned', type: 'INFO', msg: (t: string) => `You have been assigned to the task: ${t}` },
+    { title: 'Task Completed', type: 'SUCCESS', msg: (t: string) => `The task "${t}" has been marked as DONE.` },
+    { title: 'Comment Added', type: 'INFO', msg: (t: string) => `A new comment was added on "${t}".` },
+    { title: 'Project Created', type: 'SUCCESS', msg: (t: string) => `A new project workspace has been initialized.` },
+    { title: 'Deadline Approaching', type: 'WARNING', msg: (t: string) => `The deadline for "${t}" is approaching in 2 days.` },
+    { title: 'Invitation Accepted', type: 'SUCCESS', msg: (t: string) => `A new member has joined your project.` },
+    { title: 'Project Archived', type: 'WARNING', msg: (t: string) => `A legacy project was successfully archived.` }
+  ];
+
   for (let i = 0; i < 35; i++) {
     const user = randomElement(users);
+    const template = randomElement(notificationTemplates);
+    const taskName = randomElement(taskTitles);
+    
     await prisma.notification.create({
       data: {
-        title: randomElement(notificationTitles),
-        message: `You have a new update regarding your recent activity on TaskForge.`,
-        type: randomElement(['INFO', 'SUCCESS', 'WARNING', 'ERROR']) as NotificationType,
-        isRead: Math.random() > 0.5,
+        title: template.title,
+        message: template.msg(taskName),
+        type: template.type as NotificationType,
+        isRead: Math.random() > 0.6,
         userId: user.id,
         createdAt: new Date(Date.now() - randomInt(1, 72) * 60 * 60 * 1000)
       }

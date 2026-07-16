@@ -3,9 +3,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 import { CreateProjectDto } from '../dto/create-project.dto';
 import { AddProjectMemberDto } from '../dto/add-project-member.dto';
+import { ProjectFilterQueryDto } from '../../common/dto/project-filter-query.dto';
+import { getPagination } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class ProjectsService {
@@ -37,16 +40,67 @@ export class ProjectsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.project.findMany({
-      include: {
-        owner: true,
-        members: true,
+  async findAll(query: ProjectFilterQueryDto) {
+    const { page, limit, search, status, priority } = query;
+
+    const { skip, take } = getPagination(page, limit);
+
+    const where: Prisma.ProjectWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (priority) {
+      where.priority = priority;
+    }
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.project.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          owner: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+
+      this.prisma.project.count({
+        where,
+      }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   async findOne(id: string) {

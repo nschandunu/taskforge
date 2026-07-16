@@ -20,11 +20,14 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import type { AuthUser } from '../../auth/interfaces/auth-user.interface';
 
 import { CreateProjectDto } from '../dto/create-project.dto';
+// import { ProjectFilterQueryDto } from '../dto/project-filter-query.dto';
 import { ProjectsService } from '../services/projects.service';
 
 import { Delete } from '@nestjs/common';
 
 import { AddProjectMemberDto } from '../dto/add-project-member.dto';
+import { Query } from '@nestjs/common';
+import { ProjectFilterQueryDto } from '../../common/dto/project-filter-query.dto';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -54,8 +57,10 @@ export class ProjectsController {
   @ApiOperation({
     summary: 'Get all projects',
   })
-  findAll() {
-    return this.projectsService.findAll();
+  findAll(
+    @Query() query: ProjectFilterQueryDto,
+  ) {
+    return this.projectsService.findAll(query);
   }
 
   @Get(':id')

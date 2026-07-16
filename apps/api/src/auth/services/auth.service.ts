@@ -29,18 +29,31 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordMatched = await bcrypt.compare(
+    const matched = await bcrypt.compare(
       loginDto.password,
       user.password,
     );
 
-    if (!passwordMatched) {
+    if (!matched) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role.name,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
     return {
-      message: 'Credentials verified.',
-      user,
+      accessToken,
+      user: {
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        role: user.role.name,
+      },
     };
   }
 }

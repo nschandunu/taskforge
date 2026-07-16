@@ -7,11 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { 
   Search, MoreVertical, Plus, FolderKanban, Users, 
-  CheckSquare, Calendar, AlertCircle, Loader2
+  CheckSquare, Calendar, AlertCircle, Loader2, Activity
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { getProjects, createProject, getProjectDetails } from "@/services/projects.service";
+import { getProjects, createProject, getProjectDetails, updateProject, deleteProject } from "@/services/projects.service";
 import { getTasksByProject } from "@/services/tasks.service";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,75 +98,119 @@ function ProjectDetailsDrawer({ projectId, isOpen, onClose }: { projectId: strin
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="text-xl">Project Details</SheetTitle>
-          <SheetDescription>View comprehensive project metadata.</SheetDescription>
-        </SheetHeader>
-        
+      <SheetContent className="w-full sm:max-w-md p-0 overflow-y-auto bg-white border-l-[#E5E7EB]">
         {isLoading ? (
-          <div className="space-y-6">
+          <div className="p-6 space-y-6">
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-4 w-1/2" />
           </div>
         ) : isError || !project ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Error Loading Project</AlertTitle>
-          </Alert>
+          <div className="p-6">
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Error Loading Project</AlertTitle>
+            </Alert>
+          </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-bold text-[#111827]">{project.name}</h3>
-              <div className="flex gap-2">
-                <Badge variant="outline" className={project.status === "ACTIVE" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" : "border-[#6B7280]"}>{project.status}</Badge>
-                <Badge variant="outline" className={project.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" : "border-[#6B7280]"}>{project.priority}</Badge>
+          <div className="flex flex-col animate-in fade-in pb-8">
+            {/* Premium Header */}
+            <div className="bg-gradient-to-br from-[#2563EB]/10 via-[#2563EB]/5 to-transparent px-6 py-8 border-b border-[#E5E7EB]/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className={
+                  project.status === "ACTIVE" ? "border-[#2563EB]/30 text-[#2563EB] bg-[#2563EB]/10" : 
+                  project.status === "COMPLETED" ? "border-[#16A34A]/30 text-[#16A34A] bg-[#16A34A]/10" : 
+                  "border-[#6B7280]/30 text-[#6B7280] bg-[#6B7280]/10"
+                }>
+                  {project.status.replace("_", " ")}
+                </Badge>
+                <Badge variant="outline" className={
+                  project.priority === "HIGH" ? "border-[#DC2626]/30 text-[#DC2626] bg-[#DC2626]/10" : 
+                  project.priority === "MEDIUM" ? "border-[#F59E0B]/30 text-[#F59E0B] bg-[#F59E0B]/10" : 
+                  "border-[#6B7280]/30 text-[#6B7280] bg-[#6B7280]/10"
+                }>
+                  {project.priority} Priority
+                </Badge>
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-[#111827]">Description</h4>
-              <p className="text-sm text-[#6B7280] leading-relaxed">
-                {project.description || "No description provided."}
+              <h3 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-2">{project.name}</h3>
+              <p className="text-sm text-[#6B7280] leading-relaxed max-w-[90%]">
+                {project.description || "No detailed description provided for this project."}
               </p>
             </div>
 
-            <Separator />
-
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-[#111827]">Team Members</h4>
-              <div className="space-y-3">
-                {project.members?.map((member: any) => (
-                  <div key={member.id} className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs">
-                        {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
+            <div className="px-6 mt-8 space-y-10">
+              {/* Meta Grid */}
+              <div className="grid grid-cols-2 gap-6 bg-[#FAFAFA] p-5 rounded-2xl border border-[#E5E7EB]/60">
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Created On</span>
+                  <p className="text-sm font-medium text-[#111827] flex items-center gap-2">
+                    <Calendar className="size-4 text-[#9CA3AF]" />
+                    {new Date(project.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Project Owner</span>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="size-5 shadow-sm border border-[#E5E7EB]">
+                      <AvatarFallback className="bg-[#111827] text-white text-[9px]">
+                        {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-[#111827]">{member.user.firstName} {member.user.lastName}</span>
-                      <span className="text-xs text-[#6B7280]">{member.role}</span>
-                    </div>
+                    <p className="text-sm font-medium text-[#111827] truncate">
+                      {project.owner.firstName} {project.owner.lastName}
+                    </p>
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
 
-            <Separator />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <span className="text-xs text-[#6B7280]">Created</span>
-                <p className="text-sm font-medium text-[#111827]">
-                  {new Date(project.createdAt).toLocaleDateString()}
-                </p>
+              {/* Progress */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <CheckSquare className="size-4 text-[#2563EB]" />
+                  Tasks & Progress
+                </h4>
+                <div className="p-5 rounded-2xl border border-[#E5E7EB]/60 bg-white shadow-sm">
+                  <ProjectProgress projectId={projectId!} />
+                </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-xs text-[#6B7280]">Owner</span>
-                <p className="text-sm font-medium text-[#111827]">
-                  {project.owner.firstName} {project.owner.lastName}
-                </p>
+
+              {/* Team Members */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <Users className="size-4 text-[#2563EB]" />
+                  Team Members ({project.members?.length || 0})
+                </h4>
+                <div className="space-y-3">
+                  {project.members?.map((member: any) => (
+                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#FAFAFA] transition-colors border border-transparent hover:border-[#E5E7EB]">
+                      <Avatar className="size-10 shadow-sm border border-white ring-1 ring-[#E5E7EB]">
+                        <AvatarFallback className="bg-gradient-to-br from-[#2563EB]/20 to-[#2563EB]/5 text-[#2563EB] font-semibold text-sm">
+                          {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-[#111827]">{member.user.firstName} {member.user.lastName}</span>
+                        <span className="text-xs text-[#6B7280] capitalize">{member.role.toLowerCase()}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {(!project.members || project.members.length === 0) && (
+                    <p className="text-sm text-[#6B7280] italic px-2">No team members assigned.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Activity Feed Placeholder */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                  <Activity className="size-4 text-[#2563EB]" />
+                  Recent Activity
+                </h4>
+                <div className="rounded-2xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA]/50 transition-colors hover:bg-[#FAFAFA]">
+                  <Activity className="size-6 text-[#9CA3AF] mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-[#111827]">Activity feed unavailable</p>
+                  <p className="text-xs text-[#6B7280] mt-1.5 max-w-[220px] mx-auto leading-relaxed">The backend API currently does not support project-specific activity feeds.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -184,6 +228,8 @@ export default function ProjectsPage() {
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["projects"],
@@ -209,6 +255,30 @@ export default function ProjectsPage() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create project");
+    }
+  });
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string, values: Partial<ProjectFormValues> }) => updateProject(id, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project updated successfully");
+      setEditingProjectId(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update project");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteProject(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted successfully");
+      setDeletingProjectId(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete project");
     }
   });
 
@@ -411,11 +481,17 @@ export default function ProjectsPage() {
                     >
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled className="cursor-not-allowed opacity-50 text-[#111827]" title="Not supported by backend yet">
+                    <DropdownMenuItem 
+                      onClick={() => setEditingProjectId(project.id)}
+                      className="cursor-pointer text-[#111827] focus:bg-[#FAFAFA]"
+                    >
                       Edit Project
                     </DropdownMenuItem>
                     <Separator className="bg-[#E5E7EB] my-1" />
-                    <DropdownMenuItem disabled className="cursor-not-allowed opacity-50 text-[#DC2626]" title="Not supported by backend yet">
+                    <DropdownMenuItem 
+                      onClick={() => setDeletingProjectId(project.id)}
+                      className="cursor-pointer text-[#DC2626] focus:bg-[#FAFAFA] focus:text-[#DC2626]"
+                    >
                       Delete Project
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -479,6 +555,94 @@ export default function ProjectsPage() {
         isOpen={!!selectedProjectId} 
         onClose={() => setSelectedProjectId(null)} 
       />
+
+      {/* Edit Project Dialog */}
+      <Dialog open={!!editingProjectId} onOpenChange={(open) => !open && setEditingProjectId(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>
+              Modify the details of your project workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            editMutation.mutate({ 
+              id: editingProjectId!, 
+              values: { 
+                name: formData.get("name") as string,
+                description: formData.get("description") as string 
+              } 
+            });
+          }}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#111827]">Project Name</label>
+                <Input 
+                  name="name"
+                  required
+                  defaultValue={data?.items?.find(p => p.id === editingProjectId)?.name} 
+                  className="border-[#E5E7EB] focus-visible:ring-[#2563EB]" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#111827]">Description</label>
+                <textarea 
+                  name="description"
+                  defaultValue={data?.items?.find(p => p.id === editingProjectId)?.description || ""} 
+                  className="flex min-h-[80px] w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingProjectId(null)} className="rounded-lg shadow-sm">Cancel</Button>
+              <Button type="submit" disabled={editMutation.isPending} className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white rounded-lg shadow-sm">
+                {editMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Dialog */}
+      <Dialog open={!!deletingProjectId} onOpenChange={(open) => !open && setDeletingProjectId(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-[#DC2626] flex items-center gap-2">
+              <AlertCircle className="size-5" />
+              Delete Project
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-[#111827]">{data?.items?.find(p => p.id === deletingProjectId)?.name}</span>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-[#111827]">Type <span className="font-mono font-bold bg-[#FAFAFA] px-1 py-0.5 rounded border border-[#E5E7EB]">delete</span> to confirm.</p>
+            <Input 
+              className="mt-2 border-[#E5E7EB] focus-visible:ring-[#DC2626]" 
+              onChange={(e) => {
+                const btn = document.getElementById("confirm-delete-btn") as HTMLButtonElement;
+                if (btn) btn.disabled = e.target.value.toLowerCase() !== "delete";
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingProjectId(null)} className="rounded-lg shadow-sm">Cancel</Button>
+            <Button 
+              id="confirm-delete-btn"
+              disabled
+              variant="destructive" 
+              className="rounded-lg shadow-sm"
+              onClick={() => deleteMutation.mutate(deletingProjectId!)}
+            >
+              {deleteMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Delete Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -40,3 +40,18 @@ export async function getProjectDetails(id: string): Promise<any> {
   if (!data.success) throw new Error(data.message || "Failed to fetch project details");
   return data.data;
 }
+export async function updateProject(id: string, payload: Partial<CreateProjectPayload>): Promise<void> {
+  const token = getToken();
+  const { data } = await api.patch(`/projects/${id}`, payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to update project");
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  const token = getToken();
+  const { data } = await api.delete(`/projects/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!data.success) throw new Error(data.message || "Failed to delete project");
+}

@@ -119,6 +119,29 @@ export class ProjectsService {
     });
   }
 
+  async update(id: string, dto: any) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
+    return this.prisma.project.update({
+      where: { id },
+      data: dto,
+    });
+  }
+
+  async remove(id: string) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
+    // Delete all associated project members and tasks automatically if cascade is on, 
+    // or do it manually if necessary. Assuming Prisma handles cascading deletes on Project.
+    return this.prisma.project.delete({
+      where: { id },
+    });
+  }
+
   async addMember(projectId: string, dto: AddProjectMemberDto) {
     const exists = await this.prisma.projectMember.findUnique({
       where: {

@@ -19,8 +19,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { Plus, GripVertical, AlertCircle, Calendar, MessageSquare, Clock, FolderKanban } from "lucide-react";
 import { toast } from "sonner";
 
-import { getAllTasks, updateTaskStatus } from "@/services/tasks.service";
+import { getAllTasks, updateTaskStatus, getTaskDetails, getTaskComments, createTaskComment } from "@/services/tasks.service";
 import type { Task, TaskStatus } from "@/types/tasks";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -322,102 +323,200 @@ export default function TasksPage() {
       </DndContext>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto bg-[#FFFFFF] border-l border-[#E5E7EB] shadow-2xl p-0">
-          {selectedTask && (
-            <div className="flex flex-col h-full">
-              <div className="px-6 py-6 border-b border-[#E5E7EB] bg-[#FAFAFA]">
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge variant="outline" className={
-                    selectedTask.status === "DONE" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
-                    selectedTask.status === "IN_PROGRESS" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
-                    selectedTask.status === "IN_REVIEW" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                    "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
-                  }>
-                    {selectedTask.status.replace("_", " ")}
-                  </Badge>
-                  <Badge variant="outline" className={
-                    selectedTask.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
-                    selectedTask.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                    "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
-                  }>
-                    {selectedTask.priority}
-                  </Badge>
-                </div>
-                <SheetTitle className="text-xl font-bold text-[#111827] leading-tight mb-2">
-                  {selectedTask.name}
-                </SheetTitle>
-                <div className="flex items-center gap-1.5 text-sm text-[#6B7280] font-medium bg-[#FFFFFF] w-fit px-2 py-1 rounded-md border border-[#E5E7EB]">
-                  <FolderKanban className="size-3.5" />
-                  {selectedTask.project?.name || "No Project"}
-                </div>
-              </div>
-
-              <div className="p-6 space-y-6 flex-1">
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-[#111827]">Description</h4>
-                  <p className="text-sm text-[#6B7280] leading-relaxed">
-                    {selectedTask.description || "No description provided for this task."}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
-                    <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Assignee</span>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="size-6">
-                        <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[10px]">
-                          {selectedTask.assignee?.firstName?.charAt(0)}{selectedTask.assignee?.lastName?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium text-[#111827]">
-                        {selectedTask.assignee?.firstName} {selectedTask.assignee?.lastName}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
-                    <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Due Date</span>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="size-4 text-[#6B7280]" />
-                      <span className="text-sm font-medium text-[#111827]">
-                        {selectedTask.dueDate 
-                          ? new Date(selectedTask.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
-                          : "No due date"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
-                    <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Est. Hours</span>
-                    <div className="flex items-center gap-2">
-                      <Clock className="size-4 text-[#6B7280]" />
-                      <span className="text-sm font-medium text-[#111827]">0h (UI Only)</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
-                    <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Actual Hours</span>
-                    <div className="flex items-center gap-2">
-                      <Clock className="size-4 text-[#16A34A]" />
-                      <span className="text-sm font-medium text-[#111827]">0h (UI Only)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-                  <h4 className="text-sm font-semibold text-[#111827] flex items-center gap-2">
-                    <MessageSquare className="size-4" />
-                    Comments
-                  </h4>
-                  <div className="rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA]">
-                    <p className="text-sm text-[#6B7280]">No comments yet.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+        <SheetContent className="w-full sm:max-w-[480px] overflow-hidden bg-[#FFFFFF] border-l border-[#E5E7EB] shadow-2xl p-0">
+          {selectedTask && <TaskDrawerContent initialTask={selectedTask} />}
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
+  const queryClient = useQueryClient();
+  const { data: task, isLoading: isTaskLoading } = useQuery({
+    queryKey: ["task", initialTask.id],
+    queryFn: () => getTaskDetails(initialTask.id),
+    initialData: initialTask,
+  });
+
+  const { data: comments, isLoading: isCommentsLoading, isError: isCommentsError } = useQuery({
+    queryKey: ["comments", initialTask.id],
+    queryFn: () => getTaskComments(initialTask.id),
+  });
+
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<{ content: string }>();
+
+  const postCommentMutation = useMutation({
+    mutationFn: (content: string) => createTaskComment(initialTask.id, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", initialTask.id] });
+      reset();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to post comment");
+    }
+  });
+
+  const onSubmit = (data: { content: string }) => {
+    if (!data.content.trim()) return;
+    postCommentMutation.mutate(data.content);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-6 py-6 border-b border-[#E5E7EB] bg-[#FAFAFA]">
+        <div className="flex items-center gap-2 mb-4">
+          <Badge variant="outline" className={
+            task.status === "DONE" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
+            task.status === "IN_PROGRESS" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
+            task.status === "IN_REVIEW" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
+            "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
+          }>
+            {task.status.replace("_", " ")}
+          </Badge>
+          <Badge variant="outline" className={
+            task.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
+            task.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
+            "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
+          }>
+            {task.priority}
+          </Badge>
+        </div>
+        <SheetTitle className="text-xl font-bold text-[#111827] leading-tight mb-2">
+          {task.name}
+        </SheetTitle>
+        <div className="flex items-center gap-1.5 text-sm text-[#6B7280] font-medium bg-[#FFFFFF] w-fit px-2 py-1 rounded-md border border-[#E5E7EB]">
+          <FolderKanban className="size-3.5" />
+          {task.project?.name || "No Project"}
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-[#111827]">Description</h4>
+          <p className="text-sm text-[#6B7280] leading-relaxed">
+            {task.description || "No description provided for this task."}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
+            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Assignee</span>
+            <div className="flex items-center gap-2">
+              <Avatar className="size-6">
+                <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[10px]">
+                  {task.assignee?.firstName?.charAt(0) || "U"}{task.assignee?.lastName?.charAt(0) || "N"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-[#111827] truncate">
+                {task.assignee?.firstName || "Unassigned"} {task.assignee?.lastName || ""}
+              </span>
+            </div>
+          </div>
+          
+          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
+            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Due Date</span>
+            <div className="flex items-center gap-2">
+              <Calendar className="size-4 text-[#6B7280]" />
+              <span className="text-sm font-medium text-[#111827]">
+                {task.dueDate 
+                  ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
+                  : "No due date"}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
+            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Est. Hours</span>
+            <div className="flex items-center gap-2">
+              <Clock className="size-4 text-[#6B7280]" />
+              <span className="text-sm font-medium text-[#111827]">0h</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 p-3 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA]">
+            <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Actual Hours</span>
+            <div className="flex items-center gap-2">
+              <Clock className="size-4 text-[#16A34A]" />
+              <span className="text-sm font-medium text-[#111827]">0h</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between text-xs text-[#6B7280] pt-2">
+          <span>Created: {new Date(task.createdAt).toLocaleDateString()}</span>
+          <span>Updated: {new Date(task.updatedAt).toLocaleDateString()}</span>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
+          <h4 className="text-sm font-semibold text-[#111827] flex items-center gap-2">
+            <MessageSquare className="size-4" />
+            Comments
+          </h4>
+          
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+            <textarea
+              {...register("content", { required: true })}
+              placeholder="Write a comment..."
+              className="w-full rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] min-h-[80px]"
+            />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting} className="rounded-lg bg-[#2563EB] text-[#FFFFFF] hover:bg-[#2563EB]/90 h-8 text-xs">
+                Post Comment
+              </Button>
+            </div>
+          </form>
+
+          {isCommentsLoading ? (
+            <div className="space-y-4 pt-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex gap-3">
+                  <Skeleton className="size-8 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isCommentsError ? (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>Failed to load comments.</AlertDescription>
+            </Alert>
+          ) : !comments || comments.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA] mt-4">
+              <p className="text-sm text-[#6B7280]">No comments yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-6 pt-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3">
+                  <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
+                    <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs">
+                      {comment.author?.firstName?.charAt(0) || "U"}{comment.author?.lastName?.charAt(0) || "N"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#111827]">
+                        {comment.author?.firstName} {comment.author?.lastName}
+                      </span>
+                      <span className="text-xs text-[#6B7280]">
+                        {new Date(comment.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" })}
+                      </span>
+                    </div>
+                    <div className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] p-3 text-sm text-[#111827]">
+                      {comment.content}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

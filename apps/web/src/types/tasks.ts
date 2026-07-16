@@ -45,3 +45,29 @@ export interface TasksResponse {
   message: string;
   data: TasksData;
 }
+
+export interface TaskComment {
+  id: string;
+  content: string;
+  taskId: string;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+  author: TaskAssignee;
+}
+
+export interface TaskCommentsData {
+  items: TaskComment[];
+}
+
+export interface TaskCommentsResponse {
+  success: boolean;
+  message: string;
+  data: TaskCommentsData;
+}
+
+export interface TaskDetailsResponse {
+  success: boolean;
+  message: string;
+  data: Task;
+}

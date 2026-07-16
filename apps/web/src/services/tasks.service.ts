@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import type { TasksResponse, TasksData, TaskStatus } from "@/types/tasks";
+import type { TasksResponse, TasksData, TaskStatus, Task, TaskComment, TaskDetailsResponse, TaskCommentsResponse } from "@/types/tasks";
 import { getProjects } from "./projects.service";
 
 export async function getTasksByProject(projectId: string): Promise<TasksData> {
@@ -62,4 +62,33 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus): Prom
   if (!data.success) {
     throw new Error(data.message || "Failed to update task status");
   }
+}
+
+export async function getTaskDetails(taskId: string): Promise<Task> {
+  const token = getToken();
+  const { data } = await api.get<TaskDetailsResponse>(`/tasks/${taskId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!data.success) throw new Error(data.message || "Failed to fetch task details");
+  return data.data;
+}
+
+export async function getTaskComments(taskId: string): Promise<TaskComment[]> {
+  const token = getToken();
+  const { data } = await api.get<TaskCommentsResponse>(`/tasks/${taskId}/comments`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!data.success) throw new Error(data.message || "Failed to fetch comments");
+  return data.data.items || [];
+}
+
+export async function createTaskComment(taskId: string, content: string): Promise<void> {
+  const token = getToken();
+  const { data } = await api.post<any>(`/tasks/${taskId}/comments`, { content }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!data.success) throw new Error(data.message || "Failed to create comment");
 }

@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { CreateProjectDto } from '../dto/create-project.dto';
+import { AddProjectMemberDto } from '../dto/add-project-member.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -56,6 +60,59 @@ export class ProjectsService {
           include: {
             user: true,
           },
+        },
+      },
+    });
+  }
+
+  async addMember(projectId: string, dto: AddProjectMemberDto) {
+    const exists = await this.prisma.projectMember.findUnique({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: dto.userId,
+        },
+      },
+    });
+
+    if (exists) {
+      throw new ConflictException(
+        'User is already a member of this project.',
+      );
+    }
+
+    return this.prisma.projectMember.create({
+      data: {
+        projectId,
+        userId: dto.userId,
+        role: dto.role,
+      },
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  async getMembers(projectId: string) {
+    return this.prisma.projectMember.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        joinedAt: 'asc',
+      },
+    });
+  }
+
+  async removeMember(projectId: string, userId: string) {
+    return this.prisma.projectMember.delete({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId,
         },
       },
     });

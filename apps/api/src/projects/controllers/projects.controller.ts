@@ -22,6 +22,10 @@ import type { AuthUser } from '../../auth/interfaces/auth-user.interface';
 import { CreateProjectDto } from '../dto/create-project.dto';
 import { ProjectsService } from '../services/projects.service';
 
+import { Delete } from '@nestjs/common';
+
+import { AddProjectMemberDto } from '../dto/add-project-member.dto';
+
 @ApiTags('Projects')
 @ApiBearerAuth()
 @Controller({
@@ -60,5 +64,40 @@ export class ProjectsController {
   })
   findOne(@Param('id') id: string) {
     return this.projectsService.findOne(id);
+  }
+
+  @Post(':id/members')
+  @Roles(RoleType.ADMIN, RoleType.PROJECT_MANAGER)
+  @ApiOperation({
+    summary: 'Add member to project',
+  })
+  addMember(
+    @Param('id') id: string,
+    @Body() dto: AddProjectMemberDto,
+  ) {
+    return this.projectsService.addMember(id, dto);
+  }
+
+  @Get(':id/members')
+  @ApiOperation({
+    summary: 'Get project members',
+  })
+  getMembers(@Param('id') id: string) {
+    return this.projectsService.getMembers(id);
+  }
+
+  @Delete(':projectId/members/:userId')
+  @Roles(RoleType.ADMIN, RoleType.PROJECT_MANAGER)
+  @ApiOperation({
+    summary: 'Remove project member',
+  })
+  removeMember(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.projectsService.removeMember(
+      projectId,
+      userId,
+    );
   }
 }

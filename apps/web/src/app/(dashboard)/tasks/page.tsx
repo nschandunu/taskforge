@@ -257,7 +257,7 @@ export default function TasksPage() {
         const overIndex = tasks.findIndex(t => t.id === overId);
         if (tasks[activeIndex].status !== tasks[overIndex].status) {
           const newTasks = [...tasks];
-          newTasks[activeIndex].status = tasks[overIndex].status;
+          newTasks[activeIndex] = { ...newTasks[activeIndex], status: tasks[overIndex].status };
           return arrayMove(newTasks, activeIndex, overIndex);
         }
         return arrayMove(tasks, activeIndex, overIndex);
@@ -267,7 +267,7 @@ export default function TasksPage() {
         const overStatus = over.id as TaskStatus;
         if (tasks[activeIndex].status !== overStatus) {
           const newTasks = [...tasks];
-          newTasks[activeIndex].status = overStatus;
+          newTasks[activeIndex] = { ...newTasks[activeIndex], status: overStatus };
           return arrayMove(newTasks, activeIndex, activeIndex); 
         }
       }

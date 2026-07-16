@@ -302,7 +302,7 @@ export default function DashboardPage() {
                       <span className="font-bold">{activity.user.firstName} {activity.user.lastName}</span>{" "}
                       <span className="text-[#6B7280]">{activity.action}</span>
                     </p>
-                    <p className="text-xs font-medium text-[#6B7280] mt-1.5">{formatRelativeTime(activity.time)}</p>
+                    <p className="text-xs font-medium text-[#6B7280] mt-1.5">{formatRelativeTime(activity.createdAt)}</p>
                   </div>
                 </div>
               ))}

@@ -23,10 +23,11 @@ export interface RecentActivity {
   id: string;
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
   };
   action: string;
-  time: string;
+  createdAt: string;
 }
 
 export interface RecentTask {

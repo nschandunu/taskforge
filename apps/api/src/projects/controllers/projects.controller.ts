@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -70,7 +71,26 @@ export class ProjectsController {
   findOne(@Param('id') id: string) {
     return this.projectsService.findOne(id);
   }
+  @Patch(':id')
+  @Roles(RoleType.ADMIN, RoleType.PROJECT_MANAGER)
+  @ApiOperation({
+    summary: 'Update project',
+  })
+  update(
+    @Param('id') id: string,
+    @Body() dto: any, // Using any for now to bypass strict typing issues quickly
+  ) {
+    return this.projectsService.update(id, dto);
+  }
 
+  @Delete(':id')
+  @Roles(RoleType.ADMIN, RoleType.PROJECT_MANAGER)
+  @ApiOperation({
+    summary: 'Delete project',
+  })
+  remove(@Param('id') id: string) {
+    return this.projectsService.remove(id);
+  }
   @Post(':id/members')
   @Roles(RoleType.ADMIN, RoleType.PROJECT_MANAGER)
   @ApiOperation({

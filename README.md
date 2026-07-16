@@ -1,181 +1,391 @@
 # TaskForge
 
-TaskForge is a comprehensive project management system designed for engineering teams to track projects, assign tasks, and collaborate efficiently. Built with a modern monolithic repository structure, it leverages Next.js for a responsive frontend and NestJS for a robust backend architecture.
+A modern full-stack project management platform built with **Next.js**, **NestJS**, **PostgreSQL**, and **Prisma**.
 
-The application utilizes PostgreSQL and Prisma for relational data management, implements secure JWT authentication, and uses React Query and Tailwind CSS to deliver a premium, highly interactive user experience. Docker is integrated for streamlined database provisioning.
+TaskForge enables teams to manage projects, organize tasks using a Kanban workflow, collaborate through comments, monitor activity, and track project progress through a responsive dashboard. The project was developed with a strong focus on clean architecture, scalability, security, and developer experience.
+
+---
 
 ## Features
 
-- Authentication: Secure email and password login using JSON Web Tokens.
-- Role-based Authorization: Distinct access levels for Admin, Project Manager, and Team Member roles.
-- Projects: Create, update, and manage engineering workspaces with calculated progress metrics.
-- Tasks: Granular task tracking with assignments, due dates, and priority levels.
-- Kanban: Interactive drag-and-drop board for visualizing and updating task statuses.
-- Comments: Team collaboration through task-specific discussion threads.
-- Notifications: In-app notification system with unread indicators and read receipts.
-- Dashboard: High-level metrics, count-up statistics, and recent activity overview.
-- Swagger: Automated OpenAPI documentation for the backend REST API.
-- Seeder: Built-in database seeder for populating realistic engineering project data.
-- CI/CD: Automated build and testing pipelines using GitHub Actions.
-- Responsive UI: Fluid layouts optimized for desktop, tablet, and mobile viewing.
+### Authentication & Authorization
 
-## Architecture
+- JWT Authentication
+- Role-Based Access Control (RBAC)
+- Secure password hashing with bcrypt
+- Protected API routes
+- Refresh token support
 
-```mermaid
-graph TD
-    Client[Frontend Client] -->|REST API| NestJS[NestJS Backend]
-    NestJS -->|Prisma Client| PostgreSQL[(PostgreSQL)]
+### Dashboard
+
+- Project statistics
+- Task statistics
+- Recent projects
+- Recent tasks
+- Activity feed
+- Responsive dashboard cards
+
+### Project Management
+
+- Create, update, and delete projects
+- Project priority & status
+- Project members
+- Project progress tracking
+- Search and filtering
+
+### Task Management
+
+- Create, edit, and delete tasks
+- Drag-and-drop Kanban board
+- Task assignment
+- Due dates
+- Priorities
+- Status management
+
+### Collaboration
+
+- Task comments
+- Activity logging
+- Notifications
+- User profiles
+
+### Developer Experience
+
+- Swagger API Documentation
+- Database Seeder
+- Global Validation
+- Global Exception Handling
+- Standardized API Responses
+- GitHub Actions CI
+- Docker Support
+
+---
+
+# Tech Stack
+
+## Frontend
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- React Query
+- Axios
+- React Hook Form
+- Zod
+
+## Backend
+
+- NestJS
+- Prisma ORM
+- PostgreSQL
+- JWT Authentication
+- Passport
+- class-validator
+- Swagger
+
+## DevOps
+
+- Docker
+- Docker Compose
+- GitHub Actions
+- Jest
+- Vitest
+
+---
+
+# Architecture
+
+```text
+                    Next.js Frontend
+                           │
+                           │ REST API
+                           ▼
+                     NestJS Backend
+                           │
+                      Prisma ORM
+                           │
+                           ▼
+                     PostgreSQL Database
 ```
 
-## Tech Stack
+A more detailed explanation is available in:
 
-- Backend: NestJS, TypeScript, Node.js
-- Frontend: Next.js, React, Tailwind CSS, Framer Motion
-- Database: PostgreSQL, Prisma ORM
-- Authentication: Passport.js, JWT, bcrypt
-- Testing: Jest
-- CI/CD: GitHub Actions
+```
+docs/
+├── ARCHITECTURE.md
+├── API.md
+└── DECISIONS.md
+```
 
-## Folder Structure
+---
+
+# Project Structure
 
 ```text
 taskforge/
-├── .github/
-│   └── workflows/        # GitHub Actions CI pipelines
+
 ├── apps/
-│   ├── api/              # NestJS backend application
-│   └── web/              # Next.js frontend application
-├── common/               # Shared types, constants, and utilities
-├── docker/               # Docker configuration files
-├── docker-compose.yml    # Local development database orchestration
-└── package.json          # Root workspace configuration
+│   ├── api/                # NestJS Backend
+│   └── web/                # Next.js Frontend
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   └── DECISIONS.md
+│
+├── docker-compose.yml
+└── README.md
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+# Getting Started
 
-- Node.js 22 or higher
+## Prerequisites
+
+- Node.js 22+
 - pnpm
-- Docker
+- PostgreSQL
+- Docker (Optional)
 
-### Installation
+---
 
-1. Clone the repository and navigate to the project root.
-2. Install dependencies for the entire workspace:
+## Clone Repository
 
 ```bash
+git clone <repository-url>
+
+cd taskforge
+```
+
+---
+
+# Backend
+
+```bash
+cd apps/api
+
 pnpm install
 ```
 
-### Environment Variables
+Configure environment variables.
 
-Duplicate the `.env.example` file in the `apps/api` and `apps/web` directories to `.env.local` or `.env` and update the connection strings and JWT secrets as necessary.
+```
+DATABASE_URL=
 
-### Database Migration
+JWT_SECRET=
 
-Ensure Docker is running, then start the PostgreSQL instance:
-
-```bash
-docker-compose up -d
+JWT_EXPIRES_IN=
 ```
 
-Apply the Prisma migrations to the database from the `apps/api` directory:
+Generate Prisma Client
 
 ```bash
-cd apps/api
+pnpm prisma generate
+```
+
+Run migrations
+
+```bash
 pnpm prisma migrate dev
 ```
 
-### Seeder
-
-Populate the database with realistic demo data, including users, projects, tasks, and comments:
+Seed database
 
 ```bash
-cd apps/api
 pnpm db:seed
 ```
 
-### Running the Application
-
-Start the backend server:
+Run backend
 
 ```bash
-cd apps/api
 pnpm start:dev
 ```
 
-Start the frontend development server:
+---
+
+# Frontend
 
 ```bash
 cd apps/web
+
+pnpm install
+```
+
+Configure
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+```
+
+Run frontend
+
+```bash
 pnpm dev
 ```
 
-## API Documentation
+---
 
-The backend exposes an interactive OpenAPI (Swagger) interface for exploring and testing endpoints. 
+# Docker
 
-Once the backend is running, the documentation is available at:
-`http://localhost:3001/api/docs`
+Run the complete application
 
-## Testing
+```bash
+docker compose up --build
+```
 
-The backend includes a comprehensive suite of Jest unit tests covering core services.
+---
 
-Run the test suite from the `apps/api` directory:
+# API Documentation
+
+Swagger documentation is available at
+
+```
+http://localhost:3001/docs
+```
+
+The API includes documentation for all endpoints, request schemas, response models, and authentication.
+
+---
+
+# Testing
+
+Backend
 
 ```bash
 pnpm test
 ```
 
-To generate a coverage report:
+Coverage
 
 ```bash
 pnpm test:cov
 ```
 
-## CI/CD
+Frontend
 
-The repository utilizes GitHub Actions for Continuous Integration. The pipeline is defined in `.github/workflows/ci.yml` and triggers on pushes and pull requests to main, develop, and feature branches. It runs parallel jobs to install dependencies, execute builds, and run tests for both the frontend and backend, ensuring code quality before integration.
+```bash
+pnpm test
+```
 
-## Demo Credentials
+---
 
-The following credentials can be used to log in after running the database seeder.
+# Continuous Integration
 
-Admin
-- Email: admin@taskforge.com
-- Password: Password@123
+GitHub Actions automatically validates every push and pull request.
 
-Manager
-- Email: sarah.manager@taskforge.com
-- Password: Password@123
+Pipeline includes:
 
-Member
-- Email: john.dev@taskforge.com
-- Password: Password@123
+- Dependency Installation
+- Backend Build
+- Backend Tests
+- Frontend Build
+- Frontend Tests (if available)
 
-## Screenshots
+---
 
-### Dashboard
-![Dashboard](/apps/web/public/screenshots/dashboard.png)
+# Demo Accounts
 
-### Projects
-![Projects](/apps/web/public/screenshots/projects.png)
+## Administrator
 
-### Tasks
-![Tasks](/apps/web/public/screenshots/tasks.png)
+```
+Email:
+admin@taskforge.com
 
-### Notifications
-![Notifications](/apps/web/public/screenshots/notifications.png)
+Password:
+********
+```
 
-## Future Improvements
+## Project Manager
 
-- Profile Editing: Allow users to update their personal information and avatars.
-- Password Management: Implement secure password change and reset flows.
-- Activity Feeds: Introduce a system-wide activity log for auditing and tracking changes.
-- Advanced Search: Implement server-side global search across all entities.
+```
+Email:
+manager@taskforge.com
 
-## License
+Password:
+********
+```
 
-MIT
+## Team Member
+
+```
+Email:
+member@taskforge.com
+
+Password:
+********
+```
+
+> Replace the passwords above with the actual seeded credentials before submitting.
+
+---
+
+# Screenshots
+
+## Login
+
+> Add screenshot
+
+---
+
+## Dashboard
+
+> Add screenshot
+
+---
+
+## Projects
+
+> Add screenshot
+
+---
+
+## Kanban Board
+
+> Add screenshot
+
+---
+
+## Notifications
+
+> Add screenshot
+
+---
+
+## Dark Mode
+
+> Add screenshot
+
+---
+
+# Documentation
+
+Additional documentation is available in the `docs/` directory.
+
+| Document | Description |
+|----------|-------------|
+| ARCHITECTURE.md | Overall system architecture |
+| API.md | API design and conventions |
+| DECISIONS.md | Architectural and technology decisions |
+
+---
+
+# Future Improvements
+
+- Real-time notifications using WebSockets
+- File uploads and attachments
+- Advanced search
+- Email notifications
+- Audit logs
+- Workspace support
+- Calendar integration
+- Time tracking
+- Activity analytics
+
+---
+
+# License
+
+This project is licensed under the MIT License.

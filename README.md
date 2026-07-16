@@ -345,37 +345,31 @@ Password:
 
 ## Login
 
-> Add screenshot
+  <img src="./assets/login.png" alt="TaskForge Banner" width="100%">
 
 ---
 
 ## Dashboard
 
-> Add screenshot
+  <img src="./assets/dashboard.png" alt="TaskForge Banner" width="100%">
 
 ---
 
 ## Projects
 
-> Add screenshot
+  <img src="./assets/projects.png" alt="TaskForge Banner" width="100%">
 
 ---
 
 ## Kanban Board
 
-> Add screenshot
+  <img src="./assets/tasks.png" alt="TaskForge Banner" width="100%">
 
 ---
 
 ## Notifications
 
-> Add screenshot
-
----
-
-## Dark Mode
-
-> Add screenshot
+  <img src="./assets/notifications.png" alt="TaskForge Banner" width="100%">
 
 ---
 

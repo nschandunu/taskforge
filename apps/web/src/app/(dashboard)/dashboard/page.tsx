@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { motion, type Variants } from "framer-motion";
 
 function formatRelativeTime(dateString: string): string {
   try {
@@ -36,11 +37,24 @@ function formatRelativeTime(dateString: string): string {
 
 function getActivityIcon(action: string) {
   const lower = action.toLowerCase();
-  if (lower.includes("creat") || lower.includes("add")) return <PlusCircle className="size-4 text-[#16A34A]" />;
-  if (lower.includes("delet") || lower.includes("remov")) return <Trash2 className="size-4 text-[#DC2626]" />;
-  if (lower.includes("updat") || lower.includes("edit")) return <Edit3 className="size-4 text-[#F59E0B]" />;
-  return <Activity className="size-4 text-[#2563EB]" />;
+  if (lower.includes("creat") || lower.includes("add")) return <PlusCircle className="size-4 text-success" />;
+  if (lower.includes("delet") || lower.includes("remov")) return <Trash2 className="size-4 text-destructive" />;
+  if (lower.includes("updat") || lower.includes("edit")) return <Edit3 className="size-4 text-warning" />;
+  return <Activity className="size-4 text-primary" />;
 }
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 export default function DashboardPage() {
   const user = getUser();
@@ -65,50 +79,50 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-8 animate-in fade-in duration-300">
+      <div className="mx-auto flex w-full max-w-7xl flex-col space-y-8 animate-in fade-in duration-300">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-48 rounded-md" />
-          <Skeleton className="h-4 w-64 rounded-md" />
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-5 w-96" />
         </div>
         
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm">
+            <div key={i} className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
               <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-24 rounded-md" />
-                <Skeleton className="size-8 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="size-10 rounded-full" />
               </div>
-              <Skeleton className="h-10 w-16 mt-2 rounded-md" />
-              <Skeleton className="h-3 w-32 mt-1 rounded-md" />
+              <Skeleton className="h-12 w-20 mt-4" />
+              <Skeleton className="h-3 w-32 mt-2" />
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
-            <Skeleton className="h-6 w-32 rounded-md mb-2" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-7">
+          <div className="lg:col-span-4 flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-6 shadow-sm h-[450px]">
+            <Skeleton className="h-7 w-40 mb-4" />
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-md" />
+              <Skeleton key={i} className="h-14 w-full" />
             ))}
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
-            <Skeleton className="h-6 w-32 rounded-md mb-2" />
+          <div className="lg:col-span-3 flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-6 shadow-sm h-[450px]">
+            <Skeleton className="h-7 w-40 mb-4" />
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4">
                 <Skeleton className="size-10 rounded-full shrink-0" />
                 <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-3/4 rounded-md" />
-                  <Skeleton className="h-3 w-1/4 rounded-md" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/4" />
                 </div>
               </div>
             ))}
           </div>
         </div>
         
-        <div className="flex flex-col gap-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm h-[400px]">
-          <Skeleton className="h-6 w-32 rounded-md mb-2" />
+        <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-6 shadow-sm h-[400px]">
+          <Skeleton className="h-7 w-40 mb-4" />
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-md" />
+            <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
       </div>
@@ -117,15 +131,15 @@ export default function DashboardPage() {
 
   if (isError) {
     return (
-      <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col space-y-6">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Dashboard</h2>
-          <p className="text-[#6B7280]">Welcome back, {user?.name || "User"}</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
+          <p className="text-muted-foreground text-lg">Welcome back, {user?.name || "User"}</p>
         </div>
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Error Loading Dashboard</AlertTitle>
-          <AlertDescription>
+        <Alert variant="destructive" className="rounded-xl border-destructive/20 bg-destructive/5 text-destructive">
+          <AlertCircle className="size-5" />
+          <AlertTitle className="text-base font-semibold">Error Loading Dashboard</AlertTitle>
+          <AlertDescription className="text-sm">
             {error instanceof Error ? error.message : "Failed to load dashboard data. Please try again."}
           </AlertDescription>
         </Alert>
@@ -140,83 +154,92 @@ export default function DashboardPage() {
   const recentTasks = tasksData?.items?.slice(0, 5) || [];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-col space-y-8 animate-in fade-in duration-300">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="mx-auto flex w-full max-w-7xl flex-col space-y-8"
+    >
       
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h2 className="text-3xl font-bold tracking-tight text-[#111827]">Dashboard</h2>
-        <p className="text-[#6B7280] text-base">Welcome back, {user?.name || "User"}. Here is what's happening today.</p>
-      </div>
+      <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+        <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Overview</h2>
+        <p className="text-muted-foreground text-base font-medium">Welcome back, {user?.name || "User"}. Here is what's happening today.</p>
+      </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {[
           { 
             title: "Projects", 
             value: data.overview.totalProjects, 
             subtitle: "Active workspace projects",
             icon: FolderKanban,
-            color: "text-[#2563EB]",
-            bg: "bg-[#2563EB]/5"
+            color: "text-primary",
+            bg: "bg-primary/10"
           },
           { 
             title: "Tasks", 
             value: data.overview.totalTasks, 
             subtitle: "Total assigned tasks",
             icon: CheckSquare,
-            color: "text-[#111827]",
-            bg: "bg-[#111827]/5"
+            color: "text-foreground",
+            bg: "bg-secondary"
           },
           { 
             title: "Completed", 
             value: data.overview.completedTasks, 
             subtitle: "Tasks successfully finished",
             icon: CheckCircle2,
-            color: "text-[#16A34A]",
-            bg: "bg-[#16A34A]/5"
+            color: "text-success",
+            bg: "bg-success/10"
           },
           { 
             title: "Overdue", 
             value: data.overview.overdueTasks, 
             subtitle: "Requires immediate attention",
             icon: Clock,
-            color: "text-[#DC2626]",
-            bg: "bg-[#DC2626]/5"
+            color: "text-destructive",
+            bg: "bg-destructive/10"
           }
         ].map((stat, i) => (
-          <Card key={i} className="group rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#2563EB]/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-[#6B7280] uppercase tracking-wider">{stat.title}</CardTitle>
-              <div className={`flex size-10 items-center justify-center rounded-full ${stat.bg} transition-colors duration-200 group-hover:bg-[#2563EB]/10`}>
-                <stat.icon className={`size-5 ${stat.color} transition-transform duration-200 group-hover:scale-110`} />
+          <motion.div
+            key={i}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="group rounded-2xl border border-border/40 bg-card p-6 shadow-sm hover:shadow-md hover:border-border transition-all"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</span>
+              <div className={`flex size-10 items-center justify-center rounded-xl ${stat.bg} transition-transform group-hover:scale-110`}>
+                <stat.icon className={`size-5 ${stat.color}`} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#111827]">{stat.value}</div>
-              <p className="text-xs font-medium text-[#6B7280] mt-2">{stat.subtitle}</p>
-            </CardContent>
-          </Card>
+            </div>
+            <div>
+              <div className="text-4xl font-extrabold text-foreground tracking-tight">{stat.value}</div>
+              <p className="text-sm font-medium text-muted-foreground mt-2">{stat.subtitle}</p>
+            </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-7">
         
         {/* Recent Projects */}
-        <Card className="lg:col-span-4 rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col transition-all duration-200 hover:shadow-md">
-          <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
-            <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
-              <FolderKanban className="size-5 text-[#2563EB]" />
+        <motion.div variants={itemVariants} className="lg:col-span-4 rounded-2xl border border-border/50 bg-card shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow">
+          <div className="border-b border-border/50 p-6 pb-4">
+            <h3 className="text-foreground text-lg font-bold flex items-center gap-2">
+              <FolderKanban className="size-5 text-primary" />
               Recent Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 px-0 overflow-x-auto pt-0">
+            </h3>
+          </div>
+          <div className="flex-1 overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="border-[#E5E7EB] hover:bg-transparent">
-                  <TableHead className="text-[#6B7280] px-6 font-semibold py-4">Name</TableHead>
-                  <TableHead className="text-[#6B7280] font-semibold py-4">Status</TableHead>
-                  <TableHead className="text-[#6B7280] font-semibold py-4">Priority</TableHead>
-                  <TableHead className="text-[#6B7280] px-6 text-right font-semibold py-4">Owner</TableHead>
+              <TableHeader className="bg-secondary/30">
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground px-6 font-semibold py-3 h-11">Name</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold py-3 h-11">Status</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold py-3 h-11">Priority</TableHead>
+                  <TableHead className="text-muted-foreground px-6 text-right font-semibold py-3 h-11">Owner</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,32 +247,32 @@ export default function DashboardPage() {
                   <TableRow 
                     key={project.id} 
                     onClick={() => router.push('/projects')}
-                    className="border-[#E5E7EB]/50 hover:bg-[#FAFAFA] cursor-pointer transition-colors duration-150 group"
+                    className="border-border/50 hover:bg-secondary/50 cursor-pointer transition-colors group"
                   >
-                    <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{project.name}</TableCell>
+                    <TableCell className="font-semibold text-foreground px-6 py-4 group-hover:text-primary transition-colors">{project.name}</TableCell>
                     <TableCell className="py-4">
                       <Badge variant="outline" className={
-                        project.status === "ACTIVE" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
-                        project.status === "COMPLETED" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
-                        "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5"
+                        project.status === "ACTIVE" ? "border-primary/20 text-primary bg-primary/5" :
+                        project.status === "COMPLETED" ? "border-success/20 text-success bg-success/5" :
+                        "border-warning/20 text-warning bg-warning/5"
                       }>
                         {project.status.replace("_", " ")}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-4">
                       <Badge variant="outline" className={
-                        project.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
-                        project.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                        "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
+                        project.priority === "HIGH" ? "border-destructive/20 text-destructive bg-destructive/5" :
+                        project.priority === "MEDIUM" ? "border-warning/20 text-warning bg-warning/5" :
+                        "border-muted-foreground/20 text-muted-foreground bg-secondary"
                       }>
                         {project.priority}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-6 text-right py-4">
                       <div className="flex items-center justify-end gap-3">
-                        <span className="text-sm font-medium text-[#111827]">{project.owner.firstName} {project.owner.lastName}</span>
-                        <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
-                          <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs font-semibold">
+                        <span className="text-sm font-medium text-foreground">{project.owner.firstName} {project.owner.lastName}</span>
+                        <Avatar className="size-8 ring-2 ring-background shadow-sm">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                             {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -261,79 +284,79 @@ export default function DashboardPage() {
                   <TableRow>
                     <TableCell colSpan={4} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <FolderKanban className="size-8 text-[#E5E7EB]" />
-                        <p className="text-[#6B7280] font-medium">No recent projects found</p>
+                        <FolderKanban className="size-8 text-muted" />
+                        <p className="text-muted-foreground font-medium">No recent projects found</p>
                       </div>
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
 
         {/* Recent Activity */}
-        <Card className="lg:col-span-3 rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm flex flex-col transition-all duration-200 hover:shadow-md">
-          <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
-            <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
-              <Activity className="size-5 text-[#2563EB]" />
+        <motion.div variants={itemVariants} className="lg:col-span-3 rounded-2xl border border-border/50 bg-card shadow-sm flex flex-col hover:shadow-md transition-shadow">
+          <div className="border-b border-border/50 p-6 pb-4">
+            <h3 className="text-foreground text-lg font-bold flex items-center gap-2">
+              <Activity className="size-5 text-primary" />
               Activity Feed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 p-6">
+            </h3>
+          </div>
+          <div className="flex-1 p-6">
             <div className="space-y-6">
               {recentActivities.map((activity, index) => (
                 <div key={activity.id} className="relative flex gap-4 group">
                   {index !== recentActivities.length - 1 && (
-                    <div className="absolute left-5 top-12 bottom-[-1.5rem] w-px bg-[#E5E7EB] transition-colors group-hover:bg-[#2563EB]/30" />
+                    <div className="absolute left-[1.125rem] top-10 bottom-[-1.5rem] w-[2px] rounded-full bg-secondary transition-colors group-hover:bg-primary/20" />
                   )}
-                  <div className="relative mt-1">
-                    <div className="absolute -bottom-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full bg-white ring-1 ring-white">
-                      {getActivityIcon(activity.action)}
-                    </div>
-                    <Avatar className="size-10 border-2 border-white ring-1 ring-[#E5E7EB] shadow-sm transition-transform duration-200 group-hover:scale-105">
-                      <AvatarFallback className="bg-[#111827] text-white text-xs font-semibold">
+                  <div className="relative mt-0.5 shrink-0 z-10">
+                    <Avatar className="size-9 ring-4 ring-background shadow-sm">
+                      <AvatarFallback className="bg-secondary text-foreground text-xs font-bold border border-border">
                         {activity.user.firstName?.charAt(0)}{activity.user.lastName?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
+                    <div className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-background ring-2 ring-background">
+                      {getActivityIcon(activity.action)}
+                    </div>
                   </div>
-                  <div className="flex flex-col pt-1">
-                    <p className="text-sm text-[#111827] leading-tight">
-                      <span className="font-bold">{activity.user.firstName} {activity.user.lastName}</span>{" "}
-                      <span className="text-[#6B7280]">{activity.action}</span>
+                  <div className="flex flex-col pt-0.5">
+                    <p className="text-sm text-foreground leading-snug">
+                      <span className="font-semibold">{activity.user.firstName} {activity.user.lastName}</span>{" "}
+                      <span className="text-muted-foreground font-medium">{activity.action}</span>
                     </p>
-                    <p className="text-xs font-medium text-[#6B7280] mt-1.5">{formatRelativeTime(activity.createdAt)}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground/70 mt-1 uppercase tracking-wider">{formatRelativeTime(activity.createdAt)}</p>
                   </div>
                 </div>
               ))}
               {recentActivities.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
-                  <Activity className="size-8 text-[#E5E7EB]" />
-                  <p className="text-center text-[#6B7280] font-medium">No recent activity</p>
+                  <Activity className="size-8 text-muted" />
+                  <p className="text-center text-muted-foreground font-medium">No recent activity</p>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
       </div>
 
       {/* Recent Tasks */}
-      <Card className="rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
-        <CardHeader className="border-b border-[#E5E7EB]/50 pb-4">
-          <CardTitle className="text-[#111827] text-lg font-semibold flex items-center gap-2">
-            <CheckSquare className="size-5 text-[#2563EB]" />
+      <motion.div variants={itemVariants} className="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+        <div className="border-b border-border/50 p-6 pb-4">
+          <h3 className="text-foreground text-lg font-bold flex items-center gap-2">
+            <CheckSquare className="size-5 text-primary" />
             Active Tasks
-          </CardTitle>
-        </CardHeader>
+          </h3>
+        </div>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow className="border-[#E5E7EB] hover:bg-transparent">
-                <TableHead className="text-[#6B7280] px-6 font-semibold py-4">Task Name</TableHead>
-                <TableHead className="text-[#6B7280] font-semibold py-4">Status</TableHead>
-                <TableHead className="text-[#6B7280] font-semibold py-4">Priority</TableHead>
-                <TableHead className="text-[#6B7280] font-semibold py-4">Due Date</TableHead>
-                <TableHead className="text-[#6B7280] px-6 text-right font-semibold py-4">Assignee</TableHead>
+            <TableHeader className="bg-secondary/30">
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead className="text-muted-foreground px-6 font-semibold py-3 h-11">Task Name</TableHead>
+                <TableHead className="text-muted-foreground font-semibold py-3 h-11">Status</TableHead>
+                <TableHead className="text-muted-foreground font-semibold py-3 h-11">Priority</TableHead>
+                <TableHead className="text-muted-foreground font-semibold py-3 h-11">Due Date</TableHead>
+                <TableHead className="text-muted-foreground px-6 text-right font-semibold py-3 h-11">Assignee</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -341,38 +364,38 @@ export default function DashboardPage() {
                 <TableRow 
                   key={task.id} 
                   onClick={() => router.push('/tasks')}
-                  className="border-[#E5E7EB]/50 hover:bg-[#FAFAFA] cursor-pointer transition-colors duration-150 group"
+                  className="border-border/50 hover:bg-secondary/50 cursor-pointer transition-colors group"
                 >
-                  <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{task.title}</TableCell>
+                  <TableCell className="font-semibold text-foreground px-6 py-4 group-hover:text-primary transition-colors">{task.title}</TableCell>
                   <TableCell className="py-4">
                     <Badge variant="outline" className={
-                      task.status === "DONE" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
-                      task.status === "IN_PROGRESS" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
-                      "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
+                      task.status === "DONE" ? "border-success/20 text-success bg-success/5" :
+                      task.status === "IN_PROGRESS" ? "border-primary/20 text-primary bg-primary/5" :
+                      "border-muted-foreground/20 text-muted-foreground bg-secondary"
                     }>
                       {task.status.replace("_", " ")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-4">
                     <Badge variant="outline" className={
-                      task.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
-                      task.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                      "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
+                      task.priority === "HIGH" ? "border-destructive/20 text-destructive bg-destructive/5" :
+                      task.priority === "MEDIUM" ? "border-warning/20 text-warning bg-warning/5" :
+                      "border-muted-foreground/20 text-muted-foreground bg-secondary"
                     }>
                       {task.priority}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-4 text-[#111827] font-medium text-sm">
+                  <TableCell className="py-4 text-muted-foreground font-medium text-sm">
                     {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No due date"}
                   </TableCell>
                   <TableCell className="px-6 text-right py-4">
                     <div className="flex items-center justify-end gap-3">
-                      <span className="text-sm font-medium text-[#111827]">
+                      <span className="text-sm font-semibold text-foreground">
                         {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : "Unassigned"}
                       </span>
-                      <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
-                        <AvatarFallback className="bg-[#111827] text-white text-xs font-semibold">
-                          {task.assignee ? `${task.assignee.firstName.charAt(0)}${task.assignee.lastName.charAt(0)}` : "U"}
+                      <Avatar className="size-8 ring-2 ring-background shadow-sm">
+                        <AvatarFallback className="bg-secondary text-foreground text-xs font-bold border border-border">
+                          {task.assignee ? `${task.assignee.firstName.charAt(0)}${task.assignee.lastName.charAt(0)}` : "?"}
                         </AvatarFallback>
                       </Avatar>
                     </div>
@@ -383,8 +406,8 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-48 text-center">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <CheckSquare className="size-8 text-[#E5E7EB]" />
-                      <p className="text-[#6B7280] font-medium">No recent tasks found</p>
+                      <CheckSquare className="size-8 text-muted" />
+                      <p className="text-muted-foreground font-medium">No recent tasks found</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -392,7 +415,7 @@ export default function DashboardPage() {
             </TableBody>
           </Table>
         </div>
-      </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

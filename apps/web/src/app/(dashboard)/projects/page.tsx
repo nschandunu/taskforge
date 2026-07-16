@@ -10,6 +10,7 @@ import {
   CheckSquare, Calendar, AlertCircle, Loader2, Activity
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion, type Variants } from "framer-motion";
 
 import { getProjects, createProject, getProjectDetails, updateProject, deleteProject } from "@/services/projects.service";
 import { getTasksByProject } from "@/services/tasks.service";
@@ -21,7 +22,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +46,19 @@ const projectFormSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-// Sub-component to fetch tasks and calculate progress
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
 function ProjectProgress({ projectId }: { projectId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["tasks", "project", projectId],
@@ -56,7 +69,7 @@ function ProjectProgress({ projectId }: { projectId: string }) {
   if (isLoading) {
     return (
       <div className="space-y-1.5 mb-5">
-        <div className="flex justify-between text-xs text-[#6B7280]">
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>Progress</span>
           <Skeleton className="h-3 w-8" />
         </div>
@@ -71,18 +84,20 @@ function ProjectProgress({ projectId }: { projectId: string }) {
   const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   return (
-    <div className="space-y-1.5 mb-5">
-      <div className="flex justify-between text-xs text-[#6B7280] font-medium">
+    <div className="space-y-1.5 mb-5 group/progress">
+      <div className="flex justify-between text-xs text-muted-foreground font-semibold">
         <span>Progress</span>
-        <span>{percentage}%</span>
+        <span className="text-foreground">{percentage}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[#FAFAFA] border border-[#E5E7EB]">
-        <div 
-          className="h-full bg-[#2563EB] transition-all duration-500 ease-in-out" 
-          style={{ width: `${percentage}%` }}
+      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary border border-border/50">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="h-full bg-primary" 
         />
       </div>
-      <p className="text-[10px] text-[#6B7280] pt-0.5">
+      <p className="text-[10px] font-medium text-muted-foreground pt-0.5">
         {completed} of {total} tasks completed
       </p>
     </div>
@@ -98,7 +113,11 @@ function ProjectDetailsDrawer({ projectId, isOpen, onClose }: { projectId: strin
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-md p-0 overflow-y-auto bg-white border-l-[#E5E7EB]">
+      <SheetContent className="w-full sm:max-w-md p-0 overflow-y-auto bg-background border-l border-border/50 shadow-2xl">
+        <div className="sr-only">
+          <SheetTitle>Project Details</SheetTitle>
+          <SheetDescription>View in-depth project details.</SheetDescription>
+        </div>
         {isLoading ? (
           <div className="p-6 space-y-6">
             <Skeleton className="h-8 w-3/4" />
@@ -114,102 +133,97 @@ function ProjectDetailsDrawer({ projectId, isOpen, onClose }: { projectId: strin
           </div>
         ) : (
           <div className="flex flex-col animate-in fade-in pb-8">
-            {/* Premium Header */}
-            <div className="bg-gradient-to-br from-[#2563EB]/10 via-[#2563EB]/5 to-transparent px-6 py-8 border-b border-[#E5E7EB]/50">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-6 py-8 border-b border-border/50">
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="outline" className={
-                  project.status === "ACTIVE" ? "border-[#2563EB]/30 text-[#2563EB] bg-[#2563EB]/10" : 
-                  project.status === "COMPLETED" ? "border-[#16A34A]/30 text-[#16A34A] bg-[#16A34A]/10" : 
-                  "border-[#6B7280]/30 text-[#6B7280] bg-[#6B7280]/10"
+                  project.status === "ACTIVE" ? "border-primary/30 text-primary bg-primary/10" : 
+                  project.status === "COMPLETED" ? "border-success/30 text-success bg-success/10" : 
+                  "border-warning/30 text-warning bg-warning/10"
                 }>
                   {project.status.replace("_", " ")}
                 </Badge>
                 <Badge variant="outline" className={
-                  project.priority === "HIGH" ? "border-[#DC2626]/30 text-[#DC2626] bg-[#DC2626]/10" : 
-                  project.priority === "MEDIUM" ? "border-[#F59E0B]/30 text-[#F59E0B] bg-[#F59E0B]/10" : 
-                  "border-[#6B7280]/30 text-[#6B7280] bg-[#6B7280]/10"
+                  project.priority === "HIGH" ? "border-destructive/30 text-destructive bg-destructive/10" : 
+                  project.priority === "MEDIUM" ? "border-warning/30 text-warning bg-warning/10" : 
+                  "border-muted-foreground/30 text-muted-foreground bg-secondary"
                 }>
                   {project.priority} Priority
                 </Badge>
               </div>
-              <h3 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-2">{project.name}</h3>
-              <p className="text-sm text-[#6B7280] leading-relaxed max-w-[90%]">
+              <h3 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">{project.name}</h3>
+              <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-[90%]">
                 {project.description || "No detailed description provided for this project."}
               </p>
             </div>
 
             <div className="px-6 mt-8 space-y-10">
-              {/* Meta Grid */}
-              <div className="grid grid-cols-2 gap-6 bg-[#FAFAFA] p-5 rounded-2xl border border-[#E5E7EB]/60">
+              <div className="grid grid-cols-2 gap-6 bg-card p-5 rounded-2xl border border-border/50 shadow-sm">
                 <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Created On</span>
-                  <p className="text-sm font-medium text-[#111827] flex items-center gap-2">
-                    <Calendar className="size-4 text-[#9CA3AF]" />
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Created On</span>
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Calendar className="size-4 text-muted-foreground" />
                     {new Date(project.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Project Owner</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Project Owner</span>
                   <div className="flex items-center gap-2">
-                    <Avatar className="size-5 shadow-sm border border-[#E5E7EB]">
-                      <AvatarFallback className="bg-[#111827] text-white text-[9px]">
+                    <Avatar className="size-5 shadow-sm ring-1 ring-border">
+                      <AvatarFallback className="bg-secondary text-foreground text-[9px] font-bold">
                         {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm font-medium text-[#111827] truncate">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {project.owner.firstName} {project.owner.lastName}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Progress */}
               <div className="space-y-4">
-                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                  <CheckSquare className="size-4 text-[#2563EB]" />
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <CheckSquare className="size-4 text-primary" />
                   Tasks & Progress
                 </h4>
-                <div className="p-5 rounded-2xl border border-[#E5E7EB]/60 bg-white shadow-sm">
+                <div className="p-5 rounded-2xl border border-border/50 bg-card shadow-sm">
                   <ProjectProgress projectId={projectId!} />
                 </div>
               </div>
 
-              {/* Team Members */}
               <div className="space-y-4">
-                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                  <Users className="size-4 text-[#2563EB]" />
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Users className="size-4 text-primary" />
                   Team Members ({project.members?.length || 0})
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {project.members?.map((member: any) => (
-                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#FAFAFA] transition-colors border border-transparent hover:border-[#E5E7EB]">
-                      <Avatar className="size-10 shadow-sm border border-white ring-1 ring-[#E5E7EB]">
-                        <AvatarFallback className="bg-gradient-to-br from-[#2563EB]/20 to-[#2563EB]/5 text-[#2563EB] font-semibold text-sm">
+                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-secondary/50 transition-colors border border-border/30">
+                      <Avatar className="size-10 shadow-sm ring-2 ring-background">
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                           {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#111827]">{member.user.firstName} {member.user.lastName}</span>
-                        <span className="text-xs text-[#6B7280] capitalize">{member.role.toLowerCase()}</span>
+                        <span className="text-sm font-semibold text-foreground">{member.user.firstName} {member.user.lastName}</span>
+                        <span className="text-xs font-medium text-muted-foreground capitalize">{member.role.toLowerCase()}</span>
                       </div>
                     </div>
                   ))}
                   {(!project.members || project.members.length === 0) && (
-                    <p className="text-sm text-[#6B7280] italic px-2">No team members assigned.</p>
+                    <p className="text-sm text-muted-foreground italic px-2">No team members assigned.</p>
                   )}
                 </div>
               </div>
 
-              {/* Activity Feed Placeholder */}
               <div className="space-y-4">
-                <h4 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-                  <Activity className="size-4 text-[#2563EB]" />
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Activity className="size-4 text-primary" />
                   Recent Activity
                 </h4>
-                <div className="rounded-2xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA]/50 transition-colors hover:bg-[#FAFAFA]">
-                  <Activity className="size-6 text-[#9CA3AF] mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-[#111827]">Activity feed unavailable</p>
-                  <p className="text-xs text-[#6B7280] mt-1.5 max-w-[220px] mx-auto leading-relaxed">The backend API currently does not support project-specific activity feeds.</p>
+                <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center bg-secondary/30 transition-colors hover:bg-secondary/50">
+                  <Activity className="size-6 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-bold text-foreground">Activity feed unavailable</p>
+                  <p className="text-xs font-medium text-muted-foreground mt-1.5 max-w-[220px] mx-auto leading-relaxed">The backend API currently does not support project-specific activity feeds.</p>
                 </div>
               </div>
             </div>
@@ -296,22 +310,22 @@ export default function ProjectsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div className="space-y-2">
-            <Skeleton className="h-8 w-32 rounded-md" />
-            <Skeleton className="h-4 w-48 rounded-md" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-5 w-48" />
           </div>
-          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-10 w-32" />
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Skeleton className="h-10 w-full sm:w-64 rounded-lg" />
-          <Skeleton className="h-10 w-32 rounded-lg" />
-          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-10 w-full sm:w-64" />
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-[280px] w-full rounded-xl" />
+            <Skeleton key={i} className="h-[280px] w-full rounded-2xl" />
           ))}
         </div>
       </div>
@@ -320,15 +334,15 @@ export default function ProjectsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Projects</h2>
-          <p className="text-[#6B7280]">Manage all active projects.</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Projects</h2>
+          <p className="text-muted-foreground font-medium">Manage all active projects.</p>
         </div>
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Error Loading Projects</AlertTitle>
-          <AlertDescription>
+        <Alert variant="destructive" className="border-destructive/20 bg-destructive/5 rounded-2xl">
+          <AlertCircle className="size-5" />
+          <AlertTitle className="font-bold">Error Loading Projects</AlertTitle>
+          <AlertDescription className="font-medium">
             {error instanceof Error ? error.message : "Failed to load projects. Please try again."}
           </AlertDescription>
         </Alert>
@@ -337,48 +351,48 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-[#111827]">Projects</h2>
-          <p className="text-[#6B7280]">Manage all active projects.</p>
+        <div className="space-y-1.5">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Projects</h2>
+          <p className="text-muted-foreground font-medium">Manage and monitor all active workspaces.</p>
         </div>
         
         <Button 
           onClick={() => setIsCreateOpen(true)}
-          className="rounded-lg bg-[#2563EB] text-[#FFFFFF] hover:bg-[#2563EB]/90 h-10 shadow-sm"
+          className="shadow-sm font-bold"
         >
-          <Plus className="mr-2 size-4" />
+          <Plus className="mr-2 size-[1.1rem]" />
           New Project
         </Button>
       </div>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
             <DialogDescription>
               Fill out the details below to initialize a new project workspace.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#111827]">Project Name</label>
-              <Input placeholder="e.g. Website Redesign" {...form.register("name")} />
+              <label className="text-sm font-bold text-foreground">Project Name</label>
+              <Input placeholder="e.g. Website Redesign" {...form.register("name")} className="h-11 rounded-xl bg-secondary/50 focus:bg-background transition-colors" />
               {form.formState.errors.name && (
-                <p className="text-xs text-red-500">{form.formState.errors.name.message}</p>
+                <p className="text-xs font-semibold text-destructive">{form.formState.errors.name.message}</p>
               )}
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#111827]">Description (Optional)</label>
-              <Input placeholder="Brief description of the project" {...form.register("description")} />
+              <label className="text-sm font-bold text-foreground">Description (Optional)</label>
+              <Input placeholder="Brief description of the project" {...form.register("description")} className="h-11 rounded-xl bg-secondary/50 focus:bg-background transition-colors" />
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#111827]">Priority</label>
+              <label className="text-sm font-bold text-foreground">Priority</label>
               <select 
-                className="flex h-10 w-full rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                className="flex h-11 w-full rounded-xl border border-input bg-secondary/50 px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:bg-background transition-colors"
                 {...form.register("priority")}
               >
                 <option value="LOW">Low</option>
@@ -387,19 +401,9 @@ export default function ProjectsPage() {
               </select>
             </div>
             
-            <DialogFooter className="pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsCreateOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-[#2563EB] hover:bg-[#2563EB]/90"
-                disabled={createMutation.isPending}
-              >
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Create Project
               </Button>
@@ -408,19 +412,19 @@ export default function ProjectsPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
+      <div className="flex flex-col sm:flex-row gap-4 items-center bg-card p-2 rounded-2xl border border-border/50 shadow-sm">
+        <div className="relative w-full sm:w-80 group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input 
             placeholder="Search projects..." 
-            className="pl-9 rounded-lg border-[#E5E7EB] bg-[#FFFFFF] h-10 focus-visible:ring-[#2563EB]"
+            className="pl-10 rounded-xl bg-secondary/30 h-10 border-transparent focus-visible:bg-background transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         
         <select 
-          className="h-10 w-full sm:w-40 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-sm text-[#111827] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+          className="h-10 w-full sm:w-40 rounded-xl border-transparent bg-secondary/30 px-3 py-2 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:bg-background transition-all"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -432,7 +436,7 @@ export default function ProjectsPage() {
         </select>
         
         <select 
-          className="h-10 w-full sm:w-40 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-3 py-2 text-sm text-[#111827] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+          className="h-10 w-full sm:w-40 rounded-xl border-transparent bg-secondary/30 px-3 py-2 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:bg-background transition-all"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
         >
@@ -444,110 +448,120 @@ export default function ProjectsPage() {
       </div>
 
       {filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E5E7EB] bg-[#FAFAFA] py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E7EB]/50 mb-4">
-            <FolderKanban className="size-6 text-[#6B7280]" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20 py-20 text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-secondary mb-4 shadow-sm">
+            <FolderKanban className="size-7 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-[#111827]">No projects found</h3>
-          <p className="text-sm text-[#6B7280] mt-1 max-w-sm">
+          <h3 className="text-xl font-bold text-foreground">No projects found</h3>
+          <p className="text-sm font-medium text-muted-foreground mt-2 max-w-sm leading-relaxed">
             {searchQuery || statusFilter !== "ALL" || priorityFilter !== "ALL" 
               ? "We couldn't find any projects matching your current filters." 
               : "You don't have any projects yet. Create one to get started."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="flex flex-col rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm transition-all hover:shadow-md hover:border-[#2563EB]/30 group">
-              <CardHeader className="flex flex-row items-start justify-between pb-4">
-                <div className="space-y-1.5 flex-1 min-w-0 pr-4">
-                  <CardTitle className="text-lg font-semibold text-[#111827] truncate group-hover:text-[#2563EB] transition-colors">
-                    {project.name}
-                  </CardTitle>
-                  <p className="text-sm text-[#6B7280] line-clamp-2 min-h-[40px]">
-                    {project.description || "No description provided."}
-                  </p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={
-                    <Button variant="ghost" size="icon" className="shrink-0 -mr-2 text-[#6B7280] hover:text-[#111827] rounded-lg">
-                      <MoreVertical className="size-4" />
-                    </Button>
-                  } />
-                  <DropdownMenuContent align="end" className="w-40 rounded-xl border-[#E5E7EB] bg-[#FFFFFF] shadow-sm">
-                    <DropdownMenuItem 
-                      onClick={() => setSelectedProjectId(project.id)}
-                      className="cursor-pointer text-[#111827] focus:bg-[#FAFAFA]"
-                    >
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setEditingProjectId(project.id)}
-                      className="cursor-pointer text-[#111827] focus:bg-[#FAFAFA]"
-                    >
-                      Edit Project
-                    </DropdownMenuItem>
-                    <Separator className="bg-[#E5E7EB] my-1" />
-                    <DropdownMenuItem 
-                      onClick={() => setDeletingProjectId(project.id)}
-                      className="cursor-pointer text-[#DC2626] focus:bg-[#FAFAFA] focus:text-[#DC2626]"
-                    >
-                      Delete Project
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              
-              <CardContent className="pb-4 flex-1">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="outline" className={
-                    project.status === "ACTIVE" ? "border-[#2563EB] text-[#2563EB] bg-[#2563EB]/5" :
-                    project.status === "COMPLETED" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :
-                    project.status === "PLANNING" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                    "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
-                  }>
-                    {project.status.replace("_", " ")}
-                  </Badge>
-                  <Badge variant="outline" className={
-                    project.priority === "HIGH" ? "border-[#DC2626] text-[#DC2626] bg-[#DC2626]/5" :
-                    project.priority === "MEDIUM" ? "border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/5" :
-                    "border-[#6B7280] text-[#6B7280] bg-[#6B7280]/5"
-                  }>
-                    {project.priority}
-                  </Badge>
-                </div>
+            <motion.div variants={itemVariants} key={project.id}>
+              <Card className="flex flex-col rounded-2xl border-border/40 bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-1 hover:border-border group h-full">
+                <CardHeader className="flex flex-row items-start justify-between pb-4">
+                  <div className="space-y-1.5 flex-1 min-w-0 pr-4">
+                    <CardTitle className="text-lg font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                      {project.name}
+                    </CardTitle>
+                    <p className="text-sm font-medium text-muted-foreground line-clamp-2 min-h-[40px] leading-relaxed">
+                      {project.description || "No description provided."}
+                    </p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={
+                      <Button variant="ghost" size="icon" className="shrink-0 -mr-2 text-muted-foreground hover:text-foreground rounded-xl">
+                        <MoreVertical className="size-4" />
+                      </Button>
+                    } />
+                    <DropdownMenuContent align="end" className="w-44 rounded-xl border-border/50 bg-popover shadow-lg backdrop-blur-xl p-1">
+                      <DropdownMenuItem 
+                        onClick={() => setSelectedProjectId(project.id)}
+                        className="cursor-pointer font-medium text-foreground focus:bg-secondary rounded-lg my-0.5 px-3"
+                      >
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => setEditingProjectId(project.id)}
+                        className="cursor-pointer font-medium text-foreground focus:bg-secondary rounded-lg my-0.5 px-3"
+                      >
+                        Edit Project
+                      </DropdownMenuItem>
+                      <Separator className="bg-border/50 my-1" />
+                      <DropdownMenuItem 
+                        onClick={() => setDeletingProjectId(project.id)}
+                        className="cursor-pointer font-medium text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg my-0.5 px-3 transition-colors"
+                      >
+                        Delete Project
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
                 
-                <ProjectProgress projectId={project.id} />
-
-                <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-4 mt-auto">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="size-6 shadow-sm">
-                      <AvatarFallback className="bg-[#111827] text-white text-[10px] font-medium">
-                        {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs font-medium text-[#111827] truncate max-w-[100px]">
-                      {project.owner.firstName} {project.owner.lastName}
-                    </span>
+                <CardContent className="pb-5 flex-1 flex flex-col justify-between">
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <Badge variant="outline" className={
+                      project.status === "ACTIVE" ? "border-primary/20 text-primary bg-primary/5" :
+                      project.status === "COMPLETED" ? "border-success/20 text-success bg-success/5" :
+                      project.status === "PLANNING" ? "border-warning/20 text-warning bg-warning/5" :
+                      "border-muted-foreground/20 text-muted-foreground bg-secondary"
+                    }>
+                      {project.status.replace("_", " ")}
+                    </Badge>
+                    <Badge variant="outline" className={
+                      project.priority === "HIGH" ? "border-destructive/20 text-destructive bg-destructive/5" :
+                      project.priority === "MEDIUM" ? "border-warning/20 text-warning bg-warning/5" :
+                      "border-muted-foreground/20 text-muted-foreground bg-secondary"
+                    }>
+                      {project.priority}
+                    </Badge>
                   </div>
                   
-                  <div className="flex items-center gap-3 text-[#6B7280]">
-                    <div className="flex items-center gap-1">
-                      <Users className="size-3" />
-                      <span className="text-xs">{project.members?.length || 0}</span>
+                  <div className="mt-auto">
+                    <ProjectProgress projectId={project.id} />
+                  </div>
+                </CardContent>
+                <CardFooter className="bg-secondary/20 border-t border-border/40 p-4 rounded-b-2xl flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex -space-x-2">
+                      <Avatar className="size-7 border-2 border-card shadow-sm ring-1 ring-border/50 z-20">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-[10px] font-bold">
+                          {project.owner.firstName.charAt(0)}{project.owner.lastName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {project.members?.slice(0, 3).map((member: any, i: number) => (
+                        <Avatar key={member.id} className={`size-7 border-2 border-card shadow-sm ring-1 ring-border/50 z-${10 - i}`}>
+                          <AvatarFallback className="bg-secondary text-foreground text-[10px] font-bold">
+                            {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {project.members && project.members.length > 3 && (
+                        <div className="size-7 rounded-full bg-secondary text-foreground text-[10px] font-bold flex items-center justify-center border-2 border-card z-0 ring-1 ring-border/50 shadow-sm">
+                          +{project.members.length - 3}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-[#FAFAFA] border-t border-[#E5E7EB] p-3 px-6 text-xs text-[#6B7280] rounded-b-xl flex justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="size-3" />
-                  <span>Created {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-                </div>
-              </CardFooter>
-            </Card>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Calendar className="size-3.5" />
+                    <span>{new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                  </div>
+                </CardFooter>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <ProjectDetailsDrawer 
@@ -556,9 +570,8 @@ export default function ProjectsPage() {
         onClose={() => setSelectedProjectId(null)} 
       />
 
-      {/* Edit Project Dialog */}
       <Dialog open={!!editingProjectId} onOpenChange={(open) => !open && setEditingProjectId(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
             <DialogDescription>
@@ -576,28 +589,28 @@ export default function ProjectsPage() {
               } 
             });
           }}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#111827]">Project Name</label>
+                <label className="text-sm font-bold text-foreground">Project Name</label>
                 <Input 
                   name="name"
                   required
                   defaultValue={data?.items?.find(p => p.id === editingProjectId)?.name} 
-                  className="border-[#E5E7EB] focus-visible:ring-[#2563EB]" 
+                  className="h-11 rounded-xl bg-secondary/50 focus:bg-background transition-colors" 
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#111827]">Description</label>
+                <label className="text-sm font-bold text-foreground">Description</label>
                 <textarea 
                   name="description"
                   defaultValue={data?.items?.find(p => p.id === editingProjectId)?.description || ""} 
-                  className="flex min-h-[80px] w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
+                  className="flex min-h-[100px] w-full rounded-xl border border-input bg-secondary/50 px-4 py-3 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:bg-background transition-all"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditingProjectId(null)} className="rounded-lg shadow-sm">Cancel</Button>
-              <Button type="submit" disabled={editMutation.isPending} className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white rounded-lg shadow-sm">
+              <Button type="button" variant="ghost" onClick={() => setEditingProjectId(null)}>Cancel</Button>
+              <Button type="submit" disabled={editMutation.isPending}>
                 {editMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Save Changes
               </Button>
@@ -606,22 +619,21 @@ export default function ProjectsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Project Dialog */}
       <Dialog open={!!deletingProjectId} onOpenChange={(open) => !open && setDeletingProjectId(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-[#DC2626] flex items-center gap-2">
-              <AlertCircle className="size-5" />
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="size-[1.2rem]" />
               Delete Project
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <span className="font-semibold text-[#111827]">{data?.items?.find(p => p.id === deletingProjectId)?.name}</span>? This action cannot be undone.
+              Are you sure you want to delete <span className="font-bold text-foreground">{data?.items?.find(p => p.id === deletingProjectId)?.name}</span>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-[#111827]">Type <span className="font-mono font-bold bg-[#FAFAFA] px-1 py-0.5 rounded border border-[#E5E7EB]">delete</span> to confirm.</p>
+          <div className="py-2">
+            <p className="text-sm font-medium text-foreground mb-3">Type <span className="font-mono font-bold bg-secondary px-1.5 py-0.5 rounded-md border border-border/50 text-destructive">delete</span> to confirm.</p>
             <Input 
-              className="mt-2 border-[#E5E7EB] focus-visible:ring-[#DC2626]" 
+              className="h-11 rounded-xl focus-visible:ring-destructive focus-visible:border-destructive transition-colors" 
               onChange={(e) => {
                 const btn = document.getElementById("confirm-delete-btn") as HTMLButtonElement;
                 if (btn) btn.disabled = e.target.value.toLowerCase() !== "delete";
@@ -629,12 +641,11 @@ export default function ProjectsPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingProjectId(null)} className="rounded-lg shadow-sm">Cancel</Button>
+            <Button variant="ghost" onClick={() => setDeletingProjectId(null)}>Cancel</Button>
             <Button 
               id="confirm-delete-btn"
               disabled
               variant="destructive" 
-              className="rounded-lg shadow-sm"
               onClick={() => deleteMutation.mutate(deletingProjectId!)}
             >
               {deleteMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}

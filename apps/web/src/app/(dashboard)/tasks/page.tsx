@@ -114,7 +114,7 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
           </Badge>
           <GripVertical className="size-4 text-[#E5E7EB] opacity-0 transition-opacity group-hover:opacity-100" />
         </div>
-        <h4 className="font-semibold text-[#111827] line-clamp-2 leading-tight">{task.name}</h4>
+        <h4 className="font-semibold text-[#111827] line-clamp-2 leading-tight">{task.title}</h4>
         <p className="text-xs text-[#6B7280] line-clamp-2">{task.description}</p>
       </div>
       
@@ -129,11 +129,16 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
               <span>{new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
             </div>
           )}
-          <Avatar className="size-6 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
-            <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[9px]">
-              {task.assignee?.firstName?.charAt(0) || "U"}{task.assignee?.lastName?.charAt(0) || "N"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex items-center gap-1.5" title={task.assignee ? `Assigned to ${task.assignee.firstName} ${task.assignee.lastName}` : "Unassigned"}>
+            <Avatar className="size-6 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
+              <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-[9px] font-medium">
+                {task.assignee?.firstName?.charAt(0) || "U"}{task.assignee?.lastName?.charAt(0) || "N"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-[10px] font-medium text-[#111827] max-w-[70px] truncate">
+              {task.assignee ? task.assignee.firstName : "Unassigned"}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -564,7 +569,7 @@ function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
         {/* Missing Backend Support Alert for Editing Title/Desc */}
         <div className="group relative">
           <SheetTitle className="text-xl font-bold text-[#111827] leading-tight mb-2">
-            {task.name}
+            {task.title}
           </SheetTitle>
           <div className="absolute inset-0 bg-[#FAFAFA]/50 hidden group-hover:flex items-center justify-center cursor-not-allowed opacity-0 group-hover:opacity-100 transition-opacity rounded" title="Edit Task Name (Not supported by backend)">
             <span className="text-xs bg-[#111827] text-white px-2 py-1 rounded">Read Only</span>
@@ -652,67 +657,11 @@ function TaskDrawerContent({ initialTask }: { initialTask: Task }) {
             Comments
           </h4>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-            <textarea
-              {...register("content", { required: true })}
-              placeholder="Write a comment..."
-              className="w-full rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] min-h-[80px]"
-            />
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting} className="rounded-lg bg-[#2563EB] text-[#FFFFFF] hover:bg-[#2563EB]/90 h-8 text-xs">
-                Post Comment
-              </Button>
-            </div>
-          </form>
-
-          {isCommentsLoading ? (
-            <div className="space-y-4 pt-4">
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="size-8 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : isCommentsError ? (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="size-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>Failed to load comments.</AlertDescription>
-            </Alert>
-          ) : !comments || comments.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA] mt-4">
-              <p className="text-sm text-[#6B7280]">No comments yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-6 pt-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <Avatar className="size-8 border border-white shadow-sm ring-1 ring-[#E5E7EB]">
-                    <AvatarFallback className="bg-[#2563EB]/10 text-[#2563EB] text-xs">
-                      {comment.author?.firstName?.charAt(0) || "U"}{comment.author?.lastName?.charAt(0) || "N"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#111827]">
-                        {comment.author?.firstName} {comment.author?.lastName}
-                      </span>
-                      <span className="text-xs text-[#6B7280]">
-                        {new Date(comment.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" })}
-                      </span>
-                    </div>
-                    <div className="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] p-3 text-sm text-[#111827]">
-                      {comment.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center bg-[#FAFAFA] mt-4">
+            <AlertCircle className="size-5 text-[#6B7280] mx-auto mb-2" />
+            <p className="text-sm font-medium text-[#111827]">Comments are currently unavailable</p>
+            <p className="text-xs text-[#6B7280] mt-1">The backend API is missing the required comment endpoints.</p>
+          </div>
         </div>
       </div>
     </div>

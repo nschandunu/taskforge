@@ -118,6 +118,7 @@ export class TasksService {
         include: {
           creator: true,
           assignee: true,
+          project: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -149,6 +150,7 @@ export class TasksService {
       include: {
         creator: true,
         assignee: true,
+        project: true,
         comments: true,
         attachments: true,
         labels: {

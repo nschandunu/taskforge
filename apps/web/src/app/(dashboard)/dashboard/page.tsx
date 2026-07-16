@@ -343,7 +343,7 @@ export default function DashboardPage() {
                   onClick={() => router.push('/tasks')}
                   className="border-[#E5E7EB]/50 hover:bg-[#FAFAFA] cursor-pointer transition-colors duration-150 group"
                 >
-                  <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{task.name}</TableCell>
+                  <TableCell className="font-semibold text-[#111827] px-6 py-4 group-hover:text-[#2563EB] transition-colors">{task.title}</TableCell>
                   <TableCell className="py-4">
                     <Badge variant="outline" className={
                       task.status === "DONE" ? "border-[#16A34A] text-[#16A34A] bg-[#16A34A]/5" :

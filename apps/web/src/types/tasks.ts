@@ -15,7 +15,7 @@ export interface TaskProject {
 
 export interface Task {
   id: string;
-  name: string;
+  title: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
